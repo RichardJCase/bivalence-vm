@@ -1,50 +1,138 @@
 * Registers
-rp: return pointer. Address to return to when ret is called.
+The following registers are used by the VM. These cannot be modified with instructions at this time.
+
+rp: return pointer. Address to return to when ret is called. Set when call is executed.
 sp: stack pointer.
 bp: base pointer.
 ip: instruction pointer.
-rr: remainder of a division.
+rr: return register. Remainder of a division.
 
+esp: execution stack pointer. Stores page offset.
+ebp: execution base pointer. Points to start of page.
+
+br: bool register. compare/flag register to determine if jmp moves the ip.
+
+The following are general purpose rgisters. These may be modified freely.
 sr: signed, general purpose registers
 ur: unsigned, general purpose registers
 fr: floating point, general purpose registers
 
-cr: compare/flag register
-
 * Instructions
-$r = Registers
-$addr = Memory Address
-$mem = register/memory
+Instructions are equal length to reduce the number of additions and for easier alignment. 
+5 bits are used for instruction opcodes. 
 
-memory:
+/A table of bits to opcodes can be found at the bottom of this section./
+
+** Key
+| $r    | register         |
+| $addr | memory address   |
+| $mem  | register/memory  |
+| $lit  | literal          |
+| $val  | literal/register |
+** Memory
 poke $r, $addr
 peek $r, $addr
+** Numerical Operations
+add, sub, mul, div, and, or, and xor follow this format:
+add $r, $val, $val : r = val + val
+mov $r, val : r = val
 
-operations:
-add $r0, $r1, $r2 : r0 = r1 + r2
-sub "
-mul "
-div "
-bitwise ops "
-
-control:
-todo: consider adding a string register or some other means
-
-call $addr
-jmp $mem (true), $mem (false)
+** Control
+call $mem
+jmp $mem
 ret
 stop
+** Library
+[[https://linux.die.net/man/3/dlopen][load]] $r0, $mem, $r1 : where $mem is the address of a string of the library to open, $r1 is the flags, and $r0 is where the handle is stored
+[[https://linux.die.net/man/3/dlsym][sym]] $mem0, $mem1 : where $mem0 is the address of the handle, and $mem1 is the address of a string of the symbol to obtain.
 
-library:
-load $mem, $r : where $mem is the address of a string to the library to open, and $r is the flags
-todo: where to put lib handle
+ccall $mem1, $mem2 : where mem1 is a string of function name to call and mem2 is a pointer
 
-sym $mem  : $mem is address of a string of symbol name
-todo: where to put symbol
+c functions: must use the bivalance_func signature
+
+bool bivalance_func(int64_t argc, void *argv)
+** Bit table
+x86_64 instructions are, *at the very most*, 15 bytes.
+
+In this table, *n* is up to the maximum number of general purpose registers. 
+Depending on how the VM is compiled, this number may be between 4 and 32. Therefore, this requires 5 bits.
+These bits are placed after the instruction and register type bits (considered to be the opcode). 
+
+*addr* must be 64 bits (8 bytes).
+
+The order of *n* and *addr* in the instruction is what follows the opcode respectively.
+
+| Instruction            | Opcode Bits |
+|------------------------+-------------|
+| UNINITIALIZED          |       00000 |
+| poke sr[n] [addr]      |       00001 |
+| poke ur[n] [addr]      |       00010 |
+| poke fr[n] [addr]      |       00011 |
+| peek sr[n] [addr]      |       00100 |
+| peek ur[n] [addr]      |       00101 |
+| peek fr[n] [addr]      |       00110 |
+| add  sr[n] sr[n] sr[n] |       00111 |
+| add  ur[n] ur[n] ur[n] |       01000 |
+| add  fr[n] fr[n] fr[n] |       01001 |
+| sub  sr[n] sr[n] sr[n] |       01010 |
+| sub  ur[n] ur[n] ur[n] |       01011 |
+| sub  fr[n] fr[n] fr[n] |       01100 |
+| mul  sr[n] sr[n] sr[n] |       01101 |
+| mul  ur[n] ur[n] ur[n] |       01110 |
+| mul  fr[n] fr[n] fr[n] |       01111 |
+| div  sr[n] sr[n] sr[n] |       10000 |
+| div  ur[n] ur[n] ur[n] |             |
+| div  fr[n] fr[n] fr[n] |             |
+| and  sr[n] sr[n] sr[n] |             |
+| and  ur[n] ur[n] ur[n] |             |
+| or   sr[n] sr[n] sr[n] |             |
+| or   ur[n] ur[n] ur[n] |             |
+| xor  sr[n] sr[n] sr[n] |             |
+| xor  ur[n] ur[n] ur[n] |             |
+| mov  sr[n] sr[n]       |             |
+| mov  sr[n] ur[n]       |             |
+| mov  sr[n] fr[n]       |             |
+| mov  ur[n] sr[n]       |             |
+| mov  ur[n] ur[n]       |             |
+| mov  ur[n] fr[n]       |             |
+| mov  fr[n] sr[n]       |             |
+| mov  fr[n] ur[n]       |             |
+| mov  fr[n] fr[n]       |             |
+TODO: literals
+
+| call  [addr]              |   |
+| call  ur[n]               |   |
+| jmp   [addr]              |   |
+| jmp   ur[n]               |   |
+| ret                       |   |
+| stop                      |   |
+| load  ur[n]  [addr] ur[n] |   |
+| sym   [addr] [addr]       |   |
+| sym   [addr] [ur]         |   |
+| sym   [ur]   [addr]       |   |
+| sym   [ur]   [ur]         |   |
+| ccall [addr]              |   |
+| ccall [ur]                |   |
 
 * VM pipeline
-** startup
-*** setup signals
-*** init cores and libs
-*** begin execution on first core
-** execution
+** Startup
+*** Setup Signals
+The following signals are caught by the VM.
+
+| SIGINT  | cleans up and exits              |
+| SIGSEGV | opens reporter and terminates    |
+
+*** Init Cores and Libs
+Currently, the cores on the VM each contain an execution stack, a copy of a page. Each core has a stack pointer relative to the start of the stack. This method only keeps only in-use pages in memory. 
+The VM shall eventually map pages for better performance, making these execution stacks simply pointers to a page, reducing potential redundancy.
+
+The first page of the program is read into memory, and copied to the first core. If the entire program can fit into one page, then all of the cores will copy this page at runtime. When page mapping is implemented, this will become a less costly operation.
+
+Standard libraries will also be loaded for IO and convience functions. 
+
+*** Begin execution on first core
+** Execution
+Each core iterates over its execution stack. 
+If it reaches an end of stack opcode then the next stack is obtained. 
+Addresses of instructions are not relative to the stack, but to the overall program.
+If an instruction is not within the page then the new page is loaded.
