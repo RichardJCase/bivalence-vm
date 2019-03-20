@@ -62,57 +62,58 @@ These bits are placed after the instruction and register type bits (considered t
 
 The order of *n* and *addr* in the instruction is what follows the opcode respectively.
 
-| Instruction            | Opcode Bits |
-|------------------------+-------------|
-| UNINITIALIZED          |       00000 |
-| poke sr[n] [addr]      |       00001 |
-| poke ur[n] [addr]      |       00010 |
-| poke fr[n] [addr]      |       00011 |
-| peek sr[n] [addr]      |       00100 |
-| peek ur[n] [addr]      |       00101 |
-| peek fr[n] [addr]      |       00110 |
-| add  sr[n] sr[n] sr[n] |       00111 |
-| add  ur[n] ur[n] ur[n] |       01000 |
-| add  fr[n] fr[n] fr[n] |       01001 |
-| sub  sr[n] sr[n] sr[n] |       01010 |
-| sub  ur[n] ur[n] ur[n] |       01011 |
-| sub  fr[n] fr[n] fr[n] |       01100 |
-| mul  sr[n] sr[n] sr[n] |       01101 |
-| mul  ur[n] ur[n] ur[n] |       01110 |
-| mul  fr[n] fr[n] fr[n] |       01111 |
-| div  sr[n] sr[n] sr[n] |       10000 |
-| div  ur[n] ur[n] ur[n] |             |
-| div  fr[n] fr[n] fr[n] |             |
-| and  sr[n] sr[n] sr[n] |             |
-| and  ur[n] ur[n] ur[n] |             |
-| or   sr[n] sr[n] sr[n] |             |
-| or   ur[n] ur[n] ur[n] |             |
-| xor  sr[n] sr[n] sr[n] |             |
-| xor  ur[n] ur[n] ur[n] |             |
-| mov  sr[n] sr[n]       |             |
-| mov  sr[n] ur[n]       |             |
-| mov  sr[n] fr[n]       |             |
-| mov  ur[n] sr[n]       |             |
-| mov  ur[n] ur[n]       |             |
-| mov  ur[n] fr[n]       |             |
-| mov  fr[n] sr[n]       |             |
-| mov  fr[n] ur[n]       |             |
-| mov  fr[n] fr[n]       |             |
-TODO: literals
-
-| call  [addr]              |   |
-| call  ur[n]               |   |
-| jmp   [addr]              |   |
-| jmp   ur[n]               |   |
-| ret                       |   |
-| stop                      |   |
-| load  ur[n]  [addr] ur[n] |   |
-| sym   [addr] [addr]       |   |
-| sym   [addr] [ur]         |   |
-| sym   [ur]   [addr]       |   |
-| sym   [ur]   [ur]         |   |
-| ccall [addr]              |   |
-| ccall [ur]                |   |
+| Instruction               | Opcode Bits |
+|---------------------------+-------------|
+| UNINITIALIZED             |      000000 |
+| poke sr[n] [addr]         |      000001 |
+| poke ur[n] [addr]         |      000010 |
+| poke fr[n] [addr]         |      000011 |
+| peek sr[n] [addr]         |      000100 |
+| peek ur[n] [addr]         |      000101 |
+| peek fr[n] [addr]         |      000110 |
+| add  sr[n] sr[n] sr[n]    |      000111 |
+| add  ur[n] ur[n] ur[n]    |      001000 |
+| add  fr[n] fr[n] fr[n]    |      001001 |
+| sub  sr[n] sr[n] sr[n]    |      001010 |
+| sub  ur[n] ur[n] ur[n]    |      001011 |
+| sub  fr[n] fr[n] fr[n]    |      001100 |
+| mul  sr[n] sr[n] sr[n]    |      001101 |
+| mul  ur[n] ur[n] ur[n]    |      001110 |
+| mul  fr[n] fr[n] fr[n]    |      001111 |
+| div  sr[n] sr[n] sr[n]    |      010000 |
+| div  ur[n] ur[n] ur[n]    |      010001 |
+| div  fr[n] fr[n] fr[n]    |      010010 |
+| and  sr[n] sr[n] sr[n]    |      010011 |
+| and  ur[n] ur[n] ur[n]    |      010100 |
+| or   sr[n] sr[n] sr[n]    |      010101 |
+| or   ur[n] ur[n] ur[n]    |      010110 |
+| xor  sr[n] sr[n] sr[n]    |      010111 |
+| xor  ur[n] ur[n] ur[n]    |      011000 |
+| mov  sr[n] sr[n]          |      011001 |
+| mov  sr[n] ur[n]          |      011010 |
+| mov  sr[n] fr[n]          |      011011 |
+| mov  ur[n] sr[n]          |      011100 |
+| mov  ur[n] ur[n]          |      011100 |
+| mov  ur[n] fr[n]          |      011101 |
+| mov  fr[n] sr[n]          |      011110 |
+| mov  fr[n] ur[n]          |      011111 |
+| mov  fr[n] fr[n]          |      100000 |
+| mov  sr[n] n              |      100001 |
+| mov  ur[n] n              |      100010 |
+| mov  fr[n] n              |      100011 |
+| call  [addr]              |      100100 |
+| call  ur[n]               |      100101 |
+| jmp   [addr]              |      100110 |
+| jmp   ur[n]               |      100111 |
+| ret                       |      101000 |
+| stop                      |      101001 |
+| load  ur[n]  [addr] ur[n] |      101010 |
+| sym   [addr] [addr]       |      101011 |
+| sym   [addr] [ur]         |      101100 |
+| sym   [ur]   [addr]       |      101101 |
+| sym   [ur]   [ur]         |      101110 |
+| ccall [addr]              |      101111 |
+| ccall [ur]                |      110000 |
 
 * VM pipeline
 ** Startup
@@ -136,3 +137,5 @@ Each core iterates over its execution stack.
 If it reaches an end of stack opcode then the next stack is obtained. 
 Addresses of instructions are not relative to the stack, but to the overall program.
 If an instruction is not within the page then the new page is loaded.
+** Page replacement
+Page replacement shall be done in a hybrid LRU+LFU fashion. As a base LFU is used, but of those least frequently used, the least recently used is replaced.

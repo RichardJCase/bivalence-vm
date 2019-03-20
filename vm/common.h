@@ -9,6 +9,7 @@
 #include "settings.h"
 #include "bytecode.h"
 #include "operations.h"
+#include "datastructures.h"
 
 #define unused(x) (void)(x)
 #define success 0

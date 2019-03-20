@@ -1,9 +1,7 @@
-* TODO About
-** TODO Renaming
-** TODO Compete
+* DONE About
+* TODO Renaming
 * TODO Directory structure
 ** TODO include
-** TODO common objects
-* TODO Call framework
-* TODO Base Tests
-* TODO Op Codes
+** TODO common objects and datastructures
+* TODO Base tests
+* TODO Implement op codes
