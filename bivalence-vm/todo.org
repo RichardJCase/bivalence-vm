@@ -1,7 +1,0 @@
-* DONE About
-* TODO Renaming
-* TODO Directory structure
-** TODO include
-** TODO common objects and datastructures
-* TODO Base tests
-* TODO Implement op codes

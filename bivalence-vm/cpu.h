@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common.h"
-#include "bytecode.h"
+#include "cpu.h"
 
 typedef struct _cpu {
   bool br;

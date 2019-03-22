@@ -1,27 +1,26 @@
 WARNINGS=-Wall -Wextra -Wpedantic -Wunused-macros -Wunsafe-loop-optimizations -Wunsuffixed-float-constants -Wtrampolines -Wswitch-enum -Wswitch-default -Wstrict-prototypes -Wstack-protector -Wsign-conversion -Wnull-dereference -Wmultichar -Winline -Wduplicated-cond -Wconversion -Walloc-zero -Walloca $(NOWARNS)
 
-DEFINES=-DMAX_THREADS=$(MAX_THREADS) -DPAGE_SIZE=$(PAGE_SIZE)
+INCLUDE=-I../include
+CFLAGS=-c $(WARNINGS) -Werror -Wfatal-errors $(DEFINES) $(INCLUDE)
 
-LIBS=lib/*.a
-CFLAGS=$(OPLVL) -c $(WARNINGS) -Werror -Wfatal-errors $(DEFINES) -Iinclude
-TARGET=vm
+TARGET=../lib/datastructures.a
+TEST_TARGET=unit_main
 
-.PHONEY: $(LIBS)
-
-OBJ=vm.o args.o bytecode.o cpu.o execute.o settings.o
+OBJ=set.o
+TESTOBJ=unit_main.o set_test.o
 
 %.o: %.c
 	$(CC) -o $@ $< $(CFLAGS)
 
-$(TARGET): $(OBJ) $(LIBS)
-	$(CC) -o $@ $^ $(LIBS)
+$(TARGET): $(OBJ)
+	ar rc $@ $<
+	ranlib $@
 
-$(LIBS):
-	make -C datastructures
+$(TEST_TARGET): $(OBJ) $(TESTOBJ)
+	$(CC) -o $@ $^
 
 clean:
-	rm -f *.o *~ $(TARGET)
-	rm -f lib/*.a
+	rm -f *.o *~ $(TARGET) $(TEST_TARGET)
 
 re: clean $(TARGET)
 
@@ -29,5 +28,5 @@ install: $(TARGET)
 	mv $(TARGET) $(INSTALL_DIR)/$(TARGET)
 	rm -f *.o *~
 
-test: $(INSTALL_DIR)/$(TARGET)
-	valgrind -q $(TARGET)
+test: $(TARGET)
+	valgrind -q ./$(TARGET)

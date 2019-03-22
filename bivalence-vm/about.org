@@ -46,11 +46,11 @@ stop
 [[https://linux.die.net/man/3/dlopen][load]] $r0, $mem, $r1 : where $mem is the address of a string of the library to open, $r1 is the flags, and $r0 is where the handle is stored
 [[https://linux.die.net/man/3/dlsym][sym]] $mem0, $mem1 : where $mem0 is the address of the handle, and $mem1 is the address of a string of the symbol to obtain.
 
-ccall $mem1, $mem2 : where mem1 is a string of function name to call and mem2 is a pointer
+ccall $r, $mem1, $mem2 : where r is the size to pass from the stack pointer, mem1 is a string of function name to call and mem2 is a pointer
 
 c functions: must use the bivalance_func signature
 
-bool bivalance_func(int64_t argc, void *argv)
+bool func(void *arg)
 ** Bit table
 x86_64 instructions are, *at the very most*, 15 bytes.
 
@@ -62,58 +62,58 @@ These bits are placed after the instruction and register type bits (considered t
 
 The order of *n* and *addr* in the instruction is what follows the opcode respectively.
 
-| Instruction               | Opcode Bits |
-|---------------------------+-------------|
-| UNINITIALIZED             |      000000 |
-| poke sr[n] [addr]         |      000001 |
-| poke ur[n] [addr]         |      000010 |
-| poke fr[n] [addr]         |      000011 |
-| peek sr[n] [addr]         |      000100 |
-| peek ur[n] [addr]         |      000101 |
-| peek fr[n] [addr]         |      000110 |
-| add  sr[n] sr[n] sr[n]    |      000111 |
-| add  ur[n] ur[n] ur[n]    |      001000 |
-| add  fr[n] fr[n] fr[n]    |      001001 |
-| sub  sr[n] sr[n] sr[n]    |      001010 |
-| sub  ur[n] ur[n] ur[n]    |      001011 |
-| sub  fr[n] fr[n] fr[n]    |      001100 |
-| mul  sr[n] sr[n] sr[n]    |      001101 |
-| mul  ur[n] ur[n] ur[n]    |      001110 |
-| mul  fr[n] fr[n] fr[n]    |      001111 |
-| div  sr[n] sr[n] sr[n]    |      010000 |
-| div  ur[n] ur[n] ur[n]    |      010001 |
-| div  fr[n] fr[n] fr[n]    |      010010 |
-| and  sr[n] sr[n] sr[n]    |      010011 |
-| and  ur[n] ur[n] ur[n]    |      010100 |
-| or   sr[n] sr[n] sr[n]    |      010101 |
-| or   ur[n] ur[n] ur[n]    |      010110 |
-| xor  sr[n] sr[n] sr[n]    |      010111 |
-| xor  ur[n] ur[n] ur[n]    |      011000 |
-| mov  sr[n] sr[n]          |      011001 |
-| mov  sr[n] ur[n]          |      011010 |
-| mov  sr[n] fr[n]          |      011011 |
-| mov  ur[n] sr[n]          |      011100 |
-| mov  ur[n] ur[n]          |      011100 |
-| mov  ur[n] fr[n]          |      011101 |
-| mov  fr[n] sr[n]          |      011110 |
-| mov  fr[n] ur[n]          |      011111 |
-| mov  fr[n] fr[n]          |      100000 |
-| mov  sr[n] n              |      100001 |
-| mov  ur[n] n              |      100010 |
-| mov  fr[n] n              |      100011 |
-| call  [addr]              |      100100 |
-| call  ur[n]               |      100101 |
-| jmp   [addr]              |      100110 |
-| jmp   ur[n]               |      100111 |
-| ret                       |      101000 |
-| stop                      |      101001 |
-| load  ur[n]  [addr] ur[n] |      101010 |
-| sym   [addr] [addr]       |      101011 |
-| sym   [addr] [ur]         |      101100 |
-| sym   [ur]   [addr]       |      101101 |
-| sym   [ur]   [ur]         |      101110 |
-| ccall [addr]              |      101111 |
-| ccall [ur]                |      110000 |
+| Instruction                | Opcode Bits |
+|----------------------------+-------------|
+| UNINITIALIZED              |      000000 |
+| poke  sr[n]   [addr]       |      000001 |
+| poke  ur[n]   [addr]       |      000010 |
+| poke  fr[n]   [addr]       |      000011 |
+| peek  sr[n]   [addr]       |      000100 |
+| peek  ur[n]   [addr]       |      000101 |
+| peek  fr[n]   [addr]       |      000110 |
+| add   sr[n]   sr[n]  sr[n] |      000111 |
+| add   ur[n]   ur[n]  ur[n] |      001000 |
+| add   fr[n]   fr[n]  fr[n] |      001001 |
+| sub   sr[n]   sr[n]  sr[n] |      001010 |
+| sub   ur[n]   ur[n]  ur[n] |      001011 |
+| sub   fr[n]   fr[n]  fr[n] |      001100 |
+| mul   sr[n]   sr[n]  sr[n] |      001101 |
+| mul   ur[n]   ur[n]  ur[n] |      001110 |
+| mul   fr[n]   fr[n]  fr[n] |      001111 |
+| div   sr[n]   sr[n]  sr[n] |      010000 |
+| div   ur[n]   ur[n]  ur[n] |      010001 |
+| div   fr[n]   fr[n]  fr[n] |      010010 |
+| and   sr[n]   sr[n]  sr[n] |      010011 |
+| and   ur[n]   ur[n]  ur[n] |      010100 |
+| or    sr[n]   sr[n]  sr[n] |      010101 |
+| or    ur[n]   ur[n]  ur[n] |      010110 |
+| xor   sr[n]   sr[n]  sr[n] |      010111 |
+| xor   ur[n]   ur[n]  ur[n] |      011000 |
+| mov   sr[n]   sr[n]        |      011001 |
+| mov   sr[n]   ur[n]        |      011010 |
+| mov   sr[n]   fr[n]        |      011011 |
+| mov   ur[n]   sr[n]        |      011100 |
+| mov   ur[n]   ur[n]        |      011100 |
+| mov   ur[n]   fr[n]        |      011101 |
+| mov   fr[n]   sr[n]        |      011110 |
+| mov   fr[n]   ur[n]        |      011111 |
+| mov   fr[n]   fr[n]        |      100000 |
+| mov   sr[n]   n            |      100001 |
+| mov   ur[n]   n            |      100010 |
+| mov   fr[n]   n            |      100011 |
+| call  [addr]               |      100100 |
+| call  ur[n]                |      100101 |
+| jmp   [addr]               |      100110 |
+| jmp   ur[n]                |      100111 |
+| ret                        |      101000 |
+| stop                       |      101001 |
+| load  ur[n]  [addr]  ur[n] |      101010 |
+| sym   [addr] [addr]        |      101011 |
+| sym   [addr] [ur]          |      101100 |
+| sym   [ur]   [addr]        |      101101 |
+| sym   [ur]   [ur]          |      101110 |
+| ccall [ur]   [addr]        |      101111 |
+| ccall [ur]   [ur]          |      110000 |
 
 * VM pipeline
 ** Startup
