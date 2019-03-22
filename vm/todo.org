@@ -1,8 +1,0 @@
-* TODO About
-** TODO Renaming
-** TODO Compete
-* TODO Directory structure
-** TODO include
-** TODO common objects
-* TODO Base Tests
-* TODO Op Codes

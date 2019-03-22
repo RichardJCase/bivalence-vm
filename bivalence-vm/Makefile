@@ -1,22 +1,27 @@
-NOWARNS=
 WARNINGS=-Wall -Wextra -Wpedantic -Wunused-macros -Wunsafe-loop-optimizations -Wunsuffixed-float-constants -Wtrampolines -Wswitch-enum -Wswitch-default -Wstrict-prototypes -Wstack-protector -Wsign-conversion -Wnull-dereference -Wmultichar -Winline -Wduplicated-cond -Wconversion -Walloc-zero -Walloca $(NOWARNS)
 
 DEFINES=-DMAX_THREADS=$(MAX_THREADS) -DPAGE_SIZE=$(PAGE_SIZE)
 
+LIBS=lib/*.a
 CFLAGS=$(OPLVL) -c $(WARNINGS) -Werror -Wfatal-errors $(DEFINES) -Iinclude
-LINK=
 TARGET=vm
+
+.PHONEY: $(LIBS)
 
 OBJ=vm.o args.o bytecode.o cpu.o execute.o settings.o
 
 %.o: %.c
 	$(CC) -o $@ $< $(CFLAGS)
 
-$(TARGET): $(OBJ)
-	$(CC) -o $@ $^ $(LINK)
+$(TARGET): $(OBJ) $(LIBS)
+	$(CC) -o $@ $^ $(LIBS)
+
+$(LIBS):
+	make -C datastructures
 
 clean:
-	rm -f *.o *~
+	rm -f *.o *~ $(TARGET)
+	rm -f lib/*.a
 
 re: clean $(TARGET)
 
@@ -25,4 +30,4 @@ install: $(TARGET)
 	rm -f *.o *~
 
 test: $(INSTALL_DIR)/$(TARGET)
-	valgrind -q $(TARGET) #todo unit tests
+	valgrind -q $(TARGET)
