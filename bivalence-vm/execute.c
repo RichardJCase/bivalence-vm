@@ -66,10 +66,5 @@ static bool execute_op(cpu *core, size_t op){
 }
 
 bool execute(cpu *core){
-  for(size_t i = 0; i < PAGE_SIZE; i++){
-    if(execute_op(core, i))
-      return true;
-  }
   
-  return false;
 }
