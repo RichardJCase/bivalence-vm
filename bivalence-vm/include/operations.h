@@ -53,6 +53,10 @@ typedef enum {
   CCALL
 } opcode;
 
+#define OP_BITS 6
 #define REG_MASK 0x1F
+#define REG_BITS 5
 #define ADDR_MASK 0x1FFFFFFFFFFFF
+#define ADDR_BITS 53
 #define VALUE_MASK ADDR_MASK
+#define VALUE_BITS 53

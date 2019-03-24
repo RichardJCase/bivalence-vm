@@ -11,7 +11,6 @@ typedef struct _cpu {
   i8 sr[NUM_GP_REG];
   u8 ur[NUM_GP_REG];
   float fr[NUM_GP_REG];
-  char *cr[NUM_GP_REG];
   
   byte execution_stack[PAGE_SIZE];
 } cpu;

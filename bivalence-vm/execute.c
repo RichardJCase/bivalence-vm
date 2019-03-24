@@ -14,45 +14,64 @@ bool init_cores(void){
   return true;
 }
 
-static bool math_op(cpu *core, size_t op){
+#define poke(reg) {if(!write_page_bytes(addr, (byte*)&reg, sizeof(reg))) fatal(FAILED_POKE);}
+#define peek(reg) {if(!read_page_bytes(addr, (byte*)&reg, sizeof(reg))) fatal(FAILED_PEEK);}
+
+static bool mem_op(cpu *core, instruction op){
+  register_number n = (register_number)((instruction)op & (ADDR_MASK << OP_BITS));
+  address addr = op & (ADDR_MASK << (OP_BITS + REG_BITS));
+  
   switch(core->execution_stack[op]){
-  case ADD:
-  case SUB:
-  case MUL:
-  case DIV:
-  case OR:
-  case XOR:
-  case AND:
-  case LSL:
-  case LSR:
-    //todo: implement
-    return true;
+  case POKE_SR:
+    poke(core->sr[n]);
+    break;
+  case POKE_UR:
+    poke(core->ur[n]);
+    break;
+  case POKE_FR:
+    poke(core->fr[n]);
+    break;
+  case PEEK_SR:
+    peek(core->sr[n]);
+    break;
+  case PEEK_UR:
+    peek(core->ur[n]);
+    break;
+  case PEEK_FR:
+    peek(core->fr[n]);
+    break;
   default:
     return false;
   }
-
-  return true;
 }
 
-static bool logic_op(cpu *core, size_t op){
-  switch(core->execution_stack[op]){
-  case CALL:
-  case JMP:
-    return true;
-  default:
-    return false;
-  }
+#undef peek
+#undef poke
+
+static bool math_op(cpu *core, instruction op){
+  unused(core); unused(op);
+  return false;
 }
 
-static bool library_op(cpu *core, size_t op){
+static bool logic_op(cpu *core, instruction op){
+  unused(core); unused(op);
+  
+  return false;
+}
+
+static bool library_op(cpu *core, instruction op){
+  unused(core); unused(op);
   switch(core->execution_stack[op]){
     //ehuss.com/shared/
   default:
-    fatal("illegal instruction.");
+    return false;
   }
 }
 
-static bool execute_op(cpu *core, size_t op){
+static bool execute_op(cpu *core, instruction op){
+  if(mem_op(core, op))
+    return true;
+  
   if(math_op(core, op))
     return true;
 
@@ -65,6 +84,22 @@ static bool execute_op(cpu *core, size_t op){
   return false;
 }
 
+static uint64_t next_instruction(cpu *core){
+  //todo: if greater than page size than request next page
+  return core->execution_stack[core->ip++];
+}
+
 bool execute(cpu *core){
-  
+  instruction current_instruction = next_instruction(core);
+  while(current_instruction != STOP){
+    if(current_instruction == UNINIT)
+      fatal("STOP not reached before uninitialized instruction.");
+    
+    if(!execute_op(core, current_instruction))
+      fatal("Illegal instruction.");
+
+    current_instruction = next_instruction(core);
+  }
+
+  return true;
 }
