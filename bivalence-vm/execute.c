@@ -169,8 +169,32 @@ static bool assign_op(cpu *core, instruction op){
 }
 
 static bool logic_op(cpu *core, instruction op){
-  unused(core); unused(op);
-  return false;
+  register_number n = (register_number)(op & (ADDR_MASK << OP_BITS));
+  address addr = op & (ADDR_MASK << OP_BITS);
+  
+  switch(op & OP_BITS){
+  case CALL_ADDR:
+    core->rp = core->ip;
+    core->ip = addr;
+    break;
+  case CALL_UR:
+    core->rp = core->ip;
+    core->ip = core->ur[n];
+    break;
+  case JMP_ADDR:
+    core->ip = addr;
+    break;
+  case JMP_UR:
+    core->ip = core->ur[n];
+    break;
+  case RET:
+    core->ip = core->rp;
+    break;
+  default:
+    return false;
+  }
+
+  return true;
 }
 
 static bool library_op(cpu *core, instruction op){

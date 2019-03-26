@@ -5,7 +5,7 @@ rp: return pointer. Address to return to when ret is called. Set when call is ex
 sp: stack pointer.
 bp: base pointer.
 ip: instruction pointer.
-rr: return register. Remainder of a division.
+rr: remainder register. Remainder of a division.
 
 br: bool register. compare/flag register to determine if jmp moves the ip.
 
