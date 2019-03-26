@@ -53,6 +53,11 @@ typedef enum {
   CCALL
 } opcode;
 
+typedef uint64_t instruction;
+typedef uint64_t address;
+typedef uint64_t literal_value;
+typedef u8 register_number;
+
 #define OP_BITS 6
 #define REG_MASK 0x1F
 #define REG_BITS 5

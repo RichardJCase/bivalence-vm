@@ -18,7 +18,7 @@ bool init_cores(void){
 #define peek(reg) {if(!read_page_bytes(addr, (byte*)&reg, sizeof(reg))) fatal(FAILED_PEEK);}
 
 static bool mem_op(cpu *core, instruction op){
-  register_number n = (register_number)((instruction)op & (ADDR_MASK << OP_BITS));
+  register_number n = (register_number)(op & (ADDR_MASK << OP_BITS));
   address addr = op & (ADDR_MASK << (OP_BITS + REG_BITS));
   
   switch(op & OP_BITS){
@@ -43,6 +43,8 @@ static bool mem_op(cpu *core, instruction op){
   default:
     return false;
   }
+
+  return true;
 }
 
 #undef peek
@@ -50,9 +52,9 @@ static bool mem_op(cpu *core, instruction op){
 
 static bool math_op(cpu *core, instruction op){
   register_number n1, n2, n3;
-  n1 = (register_number)((instruction)op & (REG_MASK << OP_BITS));
-  n2 = (register_number)((instruction)op & (REG_MASK << (OP_BITS + REG_BITS)));
-  n3 = (register_number)((instruction)op & (REG_MASK << (OP_BITS + 2 * REG_BITS)));
+  n1 = (register_number)(op & (REG_MASK << OP_BITS));
+  n2 = (register_number)(op & (REG_MASK << (OP_BITS + REG_BITS)));
+  n3 = (register_number)(op & (REG_MASK << (OP_BITS + 2 * REG_BITS)));
   
   switch(op & OP_BITS){
   case ADD_SR:
@@ -112,11 +114,62 @@ static bool math_op(cpu *core, instruction op){
   default:
     return false;
   }
+
+  return true;
+}
+
+static bool assign_op(cpu *core, instruction op){
+  register_number n1, n2;
+  n1 = (register_number)(op & (REG_MASK << OP_BITS));
+  n2 = (register_number)(op & (REG_MASK << (OP_BITS + REG_BITS)));
+  literal_value value = (literal_value)(op & (VALUE_MASK << (OP_BITS + REG_BITS)));
+  
+  switch(op & OP_BITS){
+  case MOV_SR_SR:
+    core->sr[n1] = core->sr[n2];
+    break;
+  case MOV_SR_UR:
+    core->sr[n1] = (i8)core->ur[n2];
+    break;
+  case MOV_SR_FR:
+    core->sr[n1] = (i8)core->fr[n2];
+    break;
+  case MOV_UR_SR:
+    core->ur[n1] = (u8)core->sr[n2];
+    break;
+  case MOV_UR_UR:
+    core->ur[n1] = core->ur[n2];
+    break;
+  case MOV_UR_FR:
+    core->ur[n1] = (u8)core->fr[n2];
+    break;
+  case MOV_FR_SR:
+    core->fr[n1] = (float)core->sr[n2];
+    break;
+  case MOV_FR_UR:
+    core->fr[n1] = (float)core->ur[n2];
+    break;
+  case MOV_FR_FR:
+    core->fr[n1] = core->fr[n2];
+    break;
+  case MOV_SR_N:
+    core->sr[n1] = (i8)value;
+    break;
+  case MOV_UR_N:
+    core->ur[n1] = (u8)value;
+    break;
+  case MOV_FR_N:
+    core->fr[n1] = (float)value;
+    break;
+  default:
+    return false;
+  }
+
+  return true;
 }
 
 static bool logic_op(cpu *core, instruction op){
   unused(core); unused(op);
-  
   return false;
 }
 
@@ -136,6 +189,9 @@ static bool execute_op(cpu *core, instruction op){
   if(math_op(core, op))
     return true;
 
+  if(assign_op(core, op))
+    return true;
+  
   if(logic_op(core, op))
     return true;
   
