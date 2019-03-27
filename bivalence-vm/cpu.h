@@ -8,8 +8,8 @@ typedef struct _cpu {
   u8 rr;
   size_t rp, sp, bp, ip;
 
-  i8 sr[NUM_GP_REG];
-  u8 ur[NUM_GP_REG];
+  i16 sr[NUM_GP_REG];
+  u16 ur[NUM_GP_REG];
   float fr[NUM_GP_REG];
   
   byte execution_stack[PAGE_SIZE];

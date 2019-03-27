@@ -9,7 +9,10 @@ rr: remainder register. Remainder of a division.
 
 br: bool register. compare/flag register to determine if jmp moves the ip.
 
-The following are general purpose rgisters. These may be modified freely.
+The following are general purpose rgisters. These may be modified freely, but may also be modified by some instructions as well.
+sr and ur are garenteed to be at least 16 bits (see stdint intptr_t), but may be larger for performance based on architecture. 
+Therefore, only assume these can hold 16 bits unless you have limited architecture you're dealing with.
+
 sr: signed, general purpose registers
 ur: unsigned, general purpose registers
 fr: floating point, general purpose registers
@@ -105,8 +108,8 @@ The order of *n* and *addr* in the instruction is what follows the opcode respec
 | ret                         |      101000 |
 | stop                        |      101001 |
 | load  ur[n]  ur[n]    ur[n] |      101010 |
-| sym   [ur]   [addr]         |      101011 |
-| ccall [ur]   [ur]     [ur]  |      101100 |
+| sym   ur[n]  ur[n]    ur[n] |      101011 |
+| ccall ur[n]  ur[n]    ur[n] |      101100 |
 
 * VM pipeline
 ** Startup
@@ -132,4 +135,4 @@ Addresses of instructions are not relative to the stack, but to the overall prog
 If an instruction is not within the page then the new page is loaded.
 ** Page replacement
 Page replacement shall be done in a hybrid LRU+LFU fashion. As a base LFU is used, but of those least frequently used, the least recently used is replaced.
-A page for the stack will always be kept in memory. 
+A page for the stack will always be kept in memory.  
