@@ -132,3 +132,4 @@ Addresses of instructions are not relative to the stack, but to the overall prog
 If an instruction is not within the page then the new page is loaded.
 ** Page replacement
 Page replacement shall be done in a hybrid LRU+LFU fashion. As a base LFU is used, but of those least frequently used, the least recently used is replaced.
+A page for the stack will always be kept in memory. 

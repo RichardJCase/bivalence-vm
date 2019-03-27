@@ -1,3 +1,4 @@
+#include <dlfcn.h>
 #include "cpu.h"
 
 bool init_cores(void){
@@ -168,6 +169,12 @@ static bool assign_op(cpu *core, instruction op){
   return true;
 }
 
+static void call_common(void){
+  write_page_bytes(core->sp, core->bp, sizeof(size_t));
+  core->bp = core->sp + sizeof(size_t);
+  core->sp = core->bp;
+}
+
 static bool logic_op(cpu *core, instruction op){
   register_number n = (register_number)(op & (ADDR_MASK << OP_BITS));
   address addr = op & (ADDR_MASK << OP_BITS);
@@ -176,10 +183,12 @@ static bool logic_op(cpu *core, instruction op){
   case CALL_ADDR:
     core->rp = core->ip;
     core->ip = addr;
+    call_common();
     break;
   case CALL_UR:
     core->rp = core->ip;
     core->ip = core->ur[n];
+    call_common();
     break;
   case JMP_ADDR:
     core->ip = addr;
@@ -189,6 +198,8 @@ static bool logic_op(cpu *core, instruction op){
     break;
   case RET:
     core->ip = core->rp;
+    core->sp = core->bp;
+    core->bp = read_page_bytes(core->sp, core->bp, sizeof(size_t));
     break;
   default:
     return false;
@@ -199,7 +210,7 @@ static bool logic_op(cpu *core, instruction op){
 
 static bool library_op(cpu *core, instruction op){
   unused(core); unused(op);
-  switch(core->execution_stack[op]){
+  switch(op & OP_BITS){
     //ehuss.com/shared/
   default:
     return false;
