@@ -7,7 +7,7 @@ INCLUDES=-Iinclude
 CFLAGS=$(OPLVL) -c $(WARNINGS) $(DEFINES) $(INCLUDES) -fsplit-stack
 TARGET=vm
 
-.PHONEY: $(LIBS)
+.PHONEY: $(LIBS) $(TEST)
 
 OBJ=vm.o args.o bytecode.o cpu.o execute.o settings.o
 
@@ -20,9 +20,14 @@ $(TARGET): $(OBJ) $(LIBS)
 $(LIBS):
 	make -C datastructures
 
+$(TEST):
+	make -C test
+
 clean:
 	rm -f *.o *~ $(TARGET)
 	rm -f lib/*.a
+	make -C test clean
+	make -C datastructures clean
 
 re: clean $(TARGET)
 
