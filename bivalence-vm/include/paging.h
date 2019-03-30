@@ -1,11 +1,8 @@
 #pragma once
 
-#include "int.h"
+#include "common.h"
 
-typedef uint8_t byte;
-
-bool read_page(size_t page_start, size_t *bytes_read);
+size_t read_page(size_t page_start);
 bool read_page_bytes(size_t page_start, byte *bytes, size_t size);
 bool write_page_bytes(size_t page_start, byte *bytes, size_t size);
-
-extern byte bytecode_page[PAGE_SIZE];
+void load_page(cpu *cpu, size_t page_number);

@@ -1,19 +1,14 @@
 #include <dlfcn.h>
-#include "cpu.h"
+#include "common.h"
 
 #define poke(addr, reg) {if(!write_page_bytes(addr, (byte*)&reg, sizeof(reg))) fatal(FAILED_POKE);}
 #define peek(addr, reg) {if(!read_page_bytes(addr, (byte*)&reg, sizeof(reg))) fatal(FAILED_PEEK);}
 
 bool init_cores(void){
-  size_t bytes_read = 0;
-  if(!read_page(0, &bytes_read))
-    return false;
-
-  size_t to_init = (bytes_read < PAGE_SIZE) ? MAX_THREADS : 1;
-    for(size_t i = 0; i < to_init; i++){
-      if(!load_page(&cores[i]))
-	return false;
-    }
+  read_page(0);
+  
+  for(size_t i = 0; i < MAX_THREADS; i++)
+    load_page(&cores[i], 0);
 
   return true;
 }

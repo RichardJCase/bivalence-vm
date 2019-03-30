@@ -4,14 +4,14 @@ LIBS=../lib/datastructures.a
 INCLUDE=-I../include
 CFLAGS=-c $(WARNINGS) -Werror -Wfatal-errors $(DEFINES) $(INCLUDE)
 
-TEST=unit_main
+TARGET=unit_main
 
-OBJ=unit_main.o set_test.o
+OBJ=unit_main.o set_test.o page_test.o execute_test.o
 
 %.o: %.c
 	$(CC) -o $@ $< $(CFLAGS)
 
-$(TEST): $(OBJ) $(TESTOBJ) $(LIBS)
+$(TARGET): $(OBJ) $(TESTOBJ) $(LIBS)
 	$(CC) -o $@ $^
 
 clean:
