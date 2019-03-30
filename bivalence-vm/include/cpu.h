@@ -1,7 +1,8 @@
 #pragma once
 
-#include "common.h"
-#include "cpu.h"
+#include "int.h"
+
+typedef uint8_t byte;
 
 typedef struct _cpu {
   bool br;
@@ -12,11 +13,9 @@ typedef struct _cpu {
   u16 ur[NUM_GP_REG];
   float fr[NUM_GP_REG];
   
-  byte execution_stack[PAGE_SIZE];
+  byte *execution_stack;
 } cpu;
 
 extern cpu cores[MAX_THREADS];
 
 #define main_core cores[0]
-
-bool load_page(cpu *core);

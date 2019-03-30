@@ -5,6 +5,7 @@ cpu cores[MAX_THREADS] = {0};
 
 static void shutdown(void){
   fclose(program);
+  program = NULL;
 }
 
 int main(int argc, char **argv){
@@ -13,7 +14,8 @@ int main(int argc, char **argv){
 
   init_cores();
 
-  execute(&main_core);
+  if(!execute(&main_core))
+    return failure;
 
   shutdown();
   return success;

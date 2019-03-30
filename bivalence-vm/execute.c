@@ -1,32 +1,41 @@
-#include "cpu.h"
+#include <dlfcn.h>
+#include "common.h"
+
+#define poke(addr, reg) {if(!write_page_bytes(addr, (byte*)&reg, sizeof(reg))) fatal(FAILED_POKE);}
+#define peek(addr, reg) {if(!read_page_bytes(addr, (byte*)&reg, sizeof(reg))) fatal(FAILED_PEEK);}
 
 bool init_cores(void){
-  size_t bytes_read = 0;
-  if(!read_page(0, &bytes_read))
-    return false;
-
-  size_t to_init = (bytes_read < PAGE_SIZE) ? MAX_THREADS : 1;
-    for(size_t i = 0; i < to_init; i++){
-      if(!load_page(&cores[i]))
-	return false;
-    }
+  read_page(0);
+  
+  for(size_t i = 0; i < MAX_THREADS; i++)
+    load_page(&cores[i], 0);
 
   return true;
 }
 
-static bool math_op(cpu *core, size_t op){
-  switch(core->execution_stack[op]){
-  case ADD:
-  case SUB:
-  case MUL:
-  case DIV:
-  case OR:
-  case XOR:
-  case AND:
-  case LSL:
-  case LSR:
-    //todo: implement
-    return true;
+static bool mem_op(cpu *core, instruction op){
+  register_number n = (register_number)(op & (ADDR_MASK << OP_BITS));
+  address addr = op & (ADDR_MASK << (OP_BITS + REG_BITS));
+  
+  switch(op & OP_BITS){
+  case POKE_SR:
+    poke(addr, core->sr[n]);
+    break;
+  case POKE_UR:
+    poke(addr, core->ur[n]);
+    break;
+  case POKE_FR:
+    poke(addr, core->fr[n]);
+    break;
+  case PEEK_SR:
+    peek(addr, core->sr[n]);
+    break;
+  case PEEK_UR:
+    peek(addr, core->ur[n]);
+    break;
+  case PEEK_FR:
+    peek(addr, core->fr[n]);
+    break;
   default:
     return false;
   }
@@ -34,28 +43,194 @@ static bool math_op(cpu *core, size_t op){
   return true;
 }
 
-static bool logic_op(cpu *core, size_t op){
-  switch(core->execution_stack[op]){
-  case CALL:
-  case JMP:
-    return true;
+static bool math_op(cpu *core, instruction op){
+  register_number n1, n2, n3;
+  n1 = (register_number)(op & (REG_MASK << OP_BITS));
+  n2 = (register_number)(op & (REG_MASK << (OP_BITS + REG_BITS)));
+  n3 = (register_number)(op & (REG_MASK << (OP_BITS + 2 * REG_BITS)));
+  
+  switch(op & OP_BITS){
+  case ADD_SR:
+    core->sr[n1] = (i16)(core->sr[n2] + core->sr[n3]);
+    break;
+  case ADD_UR:
+    core->ur[n1] = (u16)(core->ur[n2] + core->ur[n3]);
+    break;
+  case ADD_FR:
+    core->fr[n1] = core->fr[n2] + core->fr[n3];
+    break;
+  case SUB_SR:
+    core->sr[n1] = (i16)(core->sr[n2] - core->sr[n3]);
+    break;
+  case SUB_UR:
+    core->ur[n1] = (u16)(core->ur[n2] - core->ur[n3]);
+    break;
+  case SUB_FR:
+    core->fr[n1] = core->fr[n2] - core->fr[n3];
+    break;
+  case MUL_SR:
+    core->sr[n1] = (i16)(core->sr[n2] * core->sr[n3]);
+    break;
+  case MUL_UR:
+    core->ur[n1] = (u16)(core->ur[n2] * core->ur[n3]);
+    break;
+  case MUL_FR:
+    core->fr[n1] = core->fr[n2] * core->fr[n3];
+    break;
+  case DIV_SR:
+    core->sr[n1] = (i16)(core->sr[n2] / core->sr[n3]);
+    break;
+  case DIV_UR:
+    core->ur[n1] = (u16)(core->ur[n2] / core->ur[n3]);
+    break;
+  case DIV_FR:
+    core->fr[n1] = core->fr[n2] / core->fr[n3];
+    break;
+  case AND_SR:
+    core->sr[n1] = (i16)(core->sr[n2] & core->sr[n3]);
+    break;
+  case AND_UR:
+    core->ur[n1] = (u16)(core->ur[n2] & core->ur[n3]);
+    break;
+  case OR_SR:
+    core->sr[n1] = (i16)(core->sr[n2] | core->sr[n3]);
+    break;
+  case OR_UR:
+    core->ur[n1] = (u16)(core->ur[n2] | core->ur[n3]);
+    break;
+  case XOR_SR:
+    core->sr[n1] = (i16)(core->sr[n2] ^ core->sr[n3]);
+    break;
+  case XOR_UR:
+    core->ur[n1] = (u16)(core->ur[n2] ^ core->ur[n3]);
+    break;
+  default:
+    return false;
+  }
+
+  return true;
+}
+
+static bool assign_op(cpu *core, instruction op){
+  register_number n1, n2;
+  n1 = (register_number)(op & (REG_MASK << OP_BITS));
+  n2 = (register_number)(op & (REG_MASK << (OP_BITS + REG_BITS)));
+  literal_value value = (literal_value)(op & (VALUE_MASK << (OP_BITS + REG_BITS)));
+  
+  switch(op & OP_BITS){
+  case MOV_SR_SR:
+    core->sr[n1] = core->sr[n2];
+    break;
+  case MOV_SR_UR:
+    core->sr[n1] = (i16)core->ur[n2];
+    break;
+  case MOV_SR_FR:
+    core->sr[n1] = (i16)core->fr[n2];
+    break;
+  case MOV_UR_SR:
+    core->ur[n1] = (u16)core->sr[n2];
+    break;
+  case MOV_UR_UR:
+    core->ur[n1] = core->ur[n2];
+    break;
+  case MOV_UR_FR:
+    core->ur[n1] = (u16)core->fr[n2];
+    break;
+  case MOV_FR_SR:
+    core->fr[n1] = (float)core->sr[n2];
+    break;
+  case MOV_FR_UR:
+    core->fr[n1] = (float)core->ur[n2];
+    break;
+  case MOV_FR_FR:
+    core->fr[n1] = core->fr[n2];
+    break;
+  case MOV_SR_N:
+    core->sr[n1] = (i16)value;
+    break;
+  case MOV_UR_N:
+    core->ur[n1] = (u16)value;
+    break;
+  case MOV_FR_N:
+    core->fr[n1] = (float)value;
+    break;
+  default:
+    return false;
+  }
+
+  return true;
+}
+
+static void call_common(cpu *core, u16 addr){
+  poke(addr, core->bp);
+  core->bp = core->sp + sizeof(size_t);
+  core->sp = core->bp;
+}
+
+static bool logic_op(cpu *core, instruction op){
+  register_number n = (register_number)(op & (ADDR_MASK << OP_BITS));
+  address addr = op & (ADDR_MASK << OP_BITS);
+  
+  switch(op & OP_BITS){
+  case CALL_ADDR:
+    core->rp = core->ip;
+    core->ip = addr;
+    call_common(core, addr);
+    break;
+  case CALL_UR:
+    core->rp = core->ip;
+    core->ip = core->ur[n];
+    call_common(core, addr);
+    break;
+  case JMP_ADDR:
+    core->ip = addr;
+    break;
+  case JMP_UR:
+    core->ip = core->ur[n];
+    break;
+  case RET:
+    core->ip = core->rp;
+    core->sp = core->bp;
+    peek(addr, core->bp);
+    break;
+  default:
+    return false;
+  }
+
+  return true;
+}
+
+static bool library_op(cpu *core, instruction op){
+  register_number n1, n2, n3;
+  n1 = (register_number)(op & (REG_MASK << OP_BITS));
+  n2 = (register_number)(op & (REG_MASK << (OP_BITS + REG_BITS)));
+  n3 = (register_number)(op & (REG_MASK << (OP_BITS + 2 * REG_BITS)));
+  
+  switch(op & OP_BITS){
+  case LOAD:
+    core->ur[n1] = (u16)dlopen((const char*)&core->ur[n2], (int)core->ur[n3]);
+    break;
+  case SYM:
+    core->ur[n1] = (u16)dlsym(&core->ur[n2], (const char*)&core->ur[n3]);
+    break;
+  case CCALL:
+    ((bool (*)(void*))core->ur[n1])(&core->ur[n2]);
+    break;
   default:
     return false;
   }
 }
 
-static bool library_op(cpu *core, size_t op){
-  switch(core->execution_stack[op]){
-    //ehuss.com/shared/
-  default:
-    fatal("illegal instruction.");
-  }
-}
-
-static bool execute_op(cpu *core, size_t op){
+static bool execute_op(cpu *core, instruction op){
+  if(mem_op(core, op))
+    return true;
+  
   if(math_op(core, op))
     return true;
 
+  if(assign_op(core, op))
+    return true;
+  
   if(logic_op(core, op))
     return true;
   
@@ -65,11 +240,22 @@ static bool execute_op(cpu *core, size_t op){
   return false;
 }
 
+static uint64_t next_instruction(cpu *core){
+  //todo: if greater than page size than request next page
+  return core->execution_stack[core->ip++];
+}
+
 bool execute(cpu *core){
-  for(size_t i = 0; i < PAGE_SIZE; i++){
-    if(execute_op(core, i))
-      return true;
+  instruction current_instruction = next_instruction(core);
+  while(current_instruction != STOP){
+    if(current_instruction == UNINIT)
+      fatal("STOP not reached before uninitialized instruction.");
+    
+    if(!execute_op(core, current_instruction))
+      fatal("Illegal instruction.");
+
+    current_instruction = next_instruction(core);
   }
-  
-  return false;
+
+  return true;
 }
