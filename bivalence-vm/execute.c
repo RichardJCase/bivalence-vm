@@ -5,7 +5,7 @@
 #define peek(addr, reg) {if(!read_page_bytes(addr, (byte*)&reg, sizeof(reg))) fatal(FAILED_PEEK);}
 
 bool init_cores(void){
-  read_page(0);
+  read_page(0, NULL);
   
   for(size_t i = 0; i < MAX_THREADS; i++)
     load_page(&cores[i], 0);

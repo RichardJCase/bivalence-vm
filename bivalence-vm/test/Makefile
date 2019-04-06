@@ -8,7 +8,7 @@ CFLAGS=-c $(WARNINGS) -Werror -Wfatal-errors $(DEFINES) $(INCLUDE)
 
 TARGET=unit_main
 
-OBJ=unit_main.o set_test.o page_test.o execute_test.o
+OBJ=unit_main.o set_test.o page_test.o execute_test.o ../paging.o ../execute.o
 
 %.o: %.c
 	$(CC) -o $@ $< $(CFLAGS)
