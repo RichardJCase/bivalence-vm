@@ -1,15 +1,25 @@
 #include <unistd.h>
 #include "common.h"
 
+#define LFU 1
+#define LRU 2
+#define BOTH 3
+
 typedef struct {
   bool written;
-  size_t use_id, start;
+  size_t use_id, uses, start;
   byte memory[PAGE_SIZE];
 } page;
 
 static size_t file_position = 0;
 static size_t page_counter = 0;
 static page page_table[NUM_PAGE] = {0};
+
+static void reset_page_uses(size_t page_index){
+  size_t offset = page_table[page_index].uses - 1;
+  for(size_t i = 0; i < NUM_PAGE; i++)
+    page_table[i].uses -= offset;
+}
 
 static void reset_page_ids(void){
   size_t offset = page_table[0].use_id - 1;
@@ -42,28 +52,83 @@ static void resort_pages(size_t inserted){
   }
 }
 
-static size_t next_available_page(void){
-  size_t oldest = 0;
-  size_t oldest_value = page_table[0].use_id;
-  for(size_t i = 1; i < NUM_PAGE; i++){
-    if(!page_table[i].use_id){
-      oldest = i;
+static void increment_usage(size_t page_index){
+  if(!(page_table[page_index].uses + 1))
+    reset_page_uses(page_index);
+  
+  ++page_table[page_index].uses;
+}
+
+static void increment_last_used(size_t page_index){
+  if(!(page_counter + 1))
+    reset_page_ids();
+  
+  page_table[page_index].use_id = ++page_counter;
+}
+
+static void lfu_available_page(size_t *lfu_pages){
+  //size_t lfu_value = 0;
+  unused(lfu_pages);
+  //todo
+  
+  for(size_t i = 0; i < NUM_PAGE; i++){
+    
+  }
+}
+
+static size_t lru_available_page(size_t *pages, size_t size){
+  size_t oldest_index = 0, oldest_value = 0;
+  
+  for(size_t i = 0; i < size; i++){
+    size_t use_id = page_table[pages[i]].use_id;
+    if(!use_id){
+      oldest_index = i;
       break;
     }
-
-    if(page_table[i].use_id < oldest_value){
-      oldest = i;
-      oldest_value = page_table[i].use_id;
+    
+    if(use_id < oldest_value){
+      oldest_index = i;
+      oldest_value = use_id;
     }
   }
 
-  page_table[oldest].use_id = ++page_counter;
-  if(!page_counter)
-    reset_page_ids();
-
-  resort_pages(oldest);
+  increment_last_used(oldest_index);
   
-  return oldest;
+  return oldest_index;
+}
+
+static size_t next_available_page(void){
+  size_t optimal;
+
+#if PRA != LRU
+  size_t lfu_pages[NUM_PAGE] = {0};
+  lfu_available_page(lfu_pages);
+#endif
+  
+#if PRA == LFU
+  unused(lru_available_page);
+  optimal = lfu_pages[0];
+#elif PRA == LRU
+  unused(lfu_available_page);
+  size_t pages[NUM_PAGE];
+  for(size_t i = 0; i < NUM_PAGE; i++)
+    pages[i] = i;
+  
+  optimal = lru_available_page(&pages, NUM_PAGE);
+#elif PRA == BOTH
+  size_t num_lfu_pages;
+  for(num_lfu_pages = 1; num_lfu_pages < NUM_PAGE; num_lfu_pages++){
+    if(!lfu_pages[num_lfu_pages])
+      break;
+  }
+  
+  optimal = lru_available_page(lfu_pages, num_lfu_pages);
+#else
+  #pragma GCC error "Invalid configuration of PRA parameter."
+#endif
+
+  resort_pages(optimal);
+  return optimal;
 }
 
 bool read_page(size_t page_start, size_t *page_index){
@@ -107,11 +172,14 @@ static size_t page_search(size_t page_start){
   return NUM_PAGE;
 }
 
-static size_t get_page(size_t page_start, size_t *page_index){
+static bool get_page(size_t page_start, size_t *page_index){
   *page_index = page_search(page_start); 
-  if(*page_index == NUM_PAGE)
-    return read_page(page_start, page_index);
+  if(*page_index == NUM_PAGE){
+    if(!read_page(page_start, page_index))
+      return false;
+  }
 
+  increment_usage(*page_index);
   return true;
 }
 
