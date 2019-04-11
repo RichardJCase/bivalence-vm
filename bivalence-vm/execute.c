@@ -20,22 +20,22 @@ static bool mem_op(cpu *core, instruction op){
   switch(op & OP_BITS){
   case POKE_SR:
     poke(addr, core->sr[n]);
-    break;
+    return true;
   case POKE_UR:
     poke(addr, core->ur[n]);
-    break;
+    return true;
   case POKE_FR:
     poke(addr, core->fr[n]);
-    break;
+    return true;
   case PEEK_SR:
     peek(addr, core->sr[n]);
-    break;
+    return true;
   case PEEK_UR:
     peek(addr, core->ur[n]);
-    break;
+    return true;
   case PEEK_FR:
     peek(addr, core->fr[n]);
-    break;
+    return true;
   default:
     return false;
   }
