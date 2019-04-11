@@ -209,13 +209,12 @@ static bool library_op(cpu *core, instruction op){
   switch(op & OP_BITS){
   case LOAD:
     core->ur[n1] = (u16)dlopen((const char*)&core->ur[n2], (int)core->ur[n3]);
-    break;
+    return (bool)core->ur[n1];
   case SYM:
     core->ur[n1] = (u16)dlsym(&core->ur[n2], (const char*)&core->ur[n3]);
-    break;
+    return (bool)core->ur[n1];
   case CCALL:
-    ((bool (*)(void*))core->ur[n1])(&core->ur[n2]);
-    break;
+    return ((bool (*)(void*))core->ur[n1])(&core->ur[n2]);
   default:
     return false;
   }

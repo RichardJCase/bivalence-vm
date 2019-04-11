@@ -3,6 +3,7 @@ WARNINGS=-Werror -Wfatal-errors -Wall -Wextra -Wpedantic -Wunused-macros -Wunsaf
 DEFINES=-DMAX_THREADS=$(MAX_THREADS) -DPAGE_SIZE=$(PAGE_SIZE) -DNUM_PAGE=$(NUM_PAGE) -DNUM_GP_REG=$(NUM_GP_REG) -DPRA=$(PRA)
 
 LIBS=lib/*.a
+LNK=-ldl
 INCLUDES=-Iinclude
 CFLAGS=$(OPLVL) -c $(WARNINGS) $(DEFINES) $(INCLUDES) -fsplit-stack
 TARGET=vm
@@ -15,7 +16,7 @@ OBJ=vm.o args.o paging.o execute.o settings.o
 	$(CC) -o $@ $< $(CFLAGS)
 
 $(TARGET): $(OBJ) $(LIBS)
-	$(CC) -o $@ $^ $(LIBS)
+	$(CC) -o $@ $^ $(LIBS) $(LNK)
 
 $(LIBS):
 	make -C datastructures

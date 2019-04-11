@@ -5,6 +5,13 @@
 
 #define PROGRAM_CODE ""
 
+static void replacement_test(void){
+  for(size_t i = 0; i < NUM_PAGE; i++)
+    assert(read_page(PAGE_SIZE * i, NULL));
+
+  
+}
+
 static void read_page_test(void){
   cpu cpu = {0};
   byte buffer[sizeof(PROGRAM_CODE)] = {0};
@@ -28,7 +35,8 @@ static void write_page_test(void){
   assert(!strncmp((char*)expected, (char*)buffer, sizeof(expected)));
 }
 
-void page_test(void){  
+void page_test(void){
+  replacement_test();
   read_page_test();
   write_page_test();
 }
