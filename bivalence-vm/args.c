@@ -3,10 +3,12 @@
 static args program_args = {0};
 
 static bool usage(void){
-  puts("RVM todo: copyright");
-  puts("todo: arg header stuff");
+#define T "\t"
+  puts("Usage: bvm [program.b]");
+  puts(T "-h " T "show help");
   
   return false;
+#undef T
 }
 
 static bool apply_flags(void){
@@ -26,12 +28,27 @@ static bool apply_flags(void){
 }
 
 static bool open_program(const char * const path){
-  program = fopen(path, "r");
-  if(program == NULL){
+#if PRA == MMAP
+  int tmpfile = open(path, O_RDWR, 0);
+  if(!tmpfile){
     printf("Unable to open %s\n", path);
     return false;
   }
 
+  struct stat st;
+  stat(pgroam &st);
+  program_size = st.st_size;
+
+  program = mmap(NULL, program_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_POPULATE, tmpfile);
+#else
+  program = fopen(path, "r+");
+#endif
+
+  if(!program){
+    printf("Unable to open %s\n", path);
+    return false;
+  }
+  
   return true;
 }
 

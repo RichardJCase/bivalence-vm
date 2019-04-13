@@ -6,7 +6,6 @@
 
 #include "log.h"
 #include "config.h"
-#include "settings.h"
 #include "cpu.h"
 #include "paging.h"
 #include "operations.h"

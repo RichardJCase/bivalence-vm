@@ -240,7 +240,13 @@ static bool execute_op(cpu *core, instruction op){
 }
 
 static uint64_t next_instruction(cpu *core){
-  //todo: if greater than page size than request next page
+  if(core->ip >= PAGE_SIZE){
+    if(!next_page(core))
+      fatal("Unable to load page.");
+
+    core->ip = 0;
+  }
+
   return core->execution_stack[core->ip++];
 }
 

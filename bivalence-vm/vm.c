@@ -4,7 +4,12 @@
 cpu cores[MAX_THREADS] = {0};
 
 static void shutdown(void){
+#if PRA == MMAP
+  munmap(program, program_size);
+#else
   fclose(program);
+#endif
+  
   program = NULL;
 }
 

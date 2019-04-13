@@ -4,16 +4,27 @@
 #define LFU 1
 #define LRU 2
 #define BOTH 3
+#define MMAP 4
 
 typedef struct {
   bool written;
   size_t use_id, uses, start;
+
+#if PRA == MMAP
+  byte *memory;
+#else
   byte memory[PAGE_SIZE];
+#endif
 } page;
 
-static size_t file_position = 0;
 static size_t page_counter = 0;
 static page page_table[NUM_PAGE] = {0};
+
+#if PRA == MMAP
+byte *program = NULL;
+#else
+FILE *program = NULL;
+#endif
 
 static void reset_page_uses(size_t page_index){
   size_t offset = page_table[page_index].uses - 1;
@@ -67,12 +78,21 @@ static void increment_last_used(size_t page_index){
 }
 
 static void lfu_available_page(size_t *lfu_pages){
-  //size_t lfu_value = 0;
-  unused(lfu_pages);
-  //todo
-  
+  size_t lfu_value = 0;
+  size_t page_count = 0;
   for(size_t i = 0; i < NUM_PAGE; i++){
+    if(page_table[i].uses < lfu_value)
+      continue;
+
+    if(page_table[i].uses == lfu_value){
+      lfu_pages[page_count++] = i;
+      continue;
+    }
+
+    lfu_value = page_table[i].uses;
     
+    memset(lfu_pages, 0, page_count);
+    page_count = 1;    
   }
 }
 
@@ -139,15 +159,18 @@ bool read_page(size_t page_start, size_t *page_index){
   *page_index = next_available_page();
   page page = page_table[*page_index];
 
+#if PRA != MMAP
   if(page.written)
     fwrite(page.memory, 1, PAGE_SIZE, program);
   
   long pos = fseek(program, (long)page_start, SEEK_CUR);
   if(pos == -1) return false;
-  file_position = (size_t)pos;
-
+  
   size_t bytes_read = fread(page.memory, 1, PAGE_SIZE, program);
   memset(page.memory + bytes_read, 0, PAGE_SIZE - bytes_read);
+#else
+  page.memory = program + page_start;
+#endif
 
   page.start = page_start;
   
@@ -184,9 +207,12 @@ static bool get_page(size_t page_start, size_t *page_index){
 }
 
 bool read_page_bytes(size_t page_start, byte *bytes, size_t size){
+#if PRA == MMAP
+  return (bool)strncpy(bytes, program + page_start, size);
+#else
   if(!size)
     return true;
-  
+
   size_t page_index;
   if(!get_page(page_start, &page_index))
     return false;
@@ -194,9 +220,13 @@ bool read_page_bytes(size_t page_start, byte *bytes, size_t size){
   size_t to_read = (size > PAGE_SIZE) ? PAGE_SIZE : size;
   memcpy(bytes, page_table[page_index].memory, to_read);
   return read_page_bytes(page_start + to_read, bytes + to_read, size - to_read);
+#endif
 }
 
 bool write_page_bytes(size_t page_start, byte *bytes, size_t size){
+#if PRA == MMAP
+  return (bool)strncpy(program + page_start, bytes, size);
+#else
   if(!size)
     return true;
   
@@ -210,8 +240,21 @@ bool write_page_bytes(size_t page_start, byte *bytes, size_t size){
   page_table[page_index].written = true;
   
   return write_page_bytes(page_start + to_write, bytes + to_write, size - to_write);
+#endif
 }
 
 void load_page(cpu *core, size_t page_number){
   core->execution_stack = page_table[page_number].memory;
+  core->ebp = page_table[page_number].start;
+}
+
+bool next_page(cpu *core){
+#if PRA != MMAP
+  size_t page_index;
+  if(!read_page(core->ebp, &page_index))
+    return false;
+#endif
+  
+  load_page(core, page_index);
+  return true;
 }

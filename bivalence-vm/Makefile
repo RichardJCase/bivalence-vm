@@ -6,11 +6,11 @@ LIBS=lib/*.a
 LNK=-ldl
 INCLUDES=-Iinclude
 CFLAGS=$(OPLVL) -c $(WARNINGS) $(DEFINES) $(INCLUDES) -fsplit-stack
-TARGET=vm
+TARGET=bvm
 
 .PHONEY: $(LIBS) $(TEST)
 
-OBJ=vm.o args.o paging.o execute.o settings.o
+OBJ=vm.o args.o paging.o execute.o
 
 %.o: %.c
 	$(CC) -o $@ $< $(CFLAGS)
@@ -36,5 +36,5 @@ install: $(TARGET)
 	mv $(TARGET) $(INSTALL_DIR)/$(TARGET)
 	rm -f *.o *~
 
-test: $(INSTALL_DIR)/$(TARGET)
-	valgrind -q $(TARGET)
+test: $(TARGET)
+	valgrind -q ./$(TARGET)

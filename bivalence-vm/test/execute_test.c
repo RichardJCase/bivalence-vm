@@ -14,6 +14,7 @@ void run_prog(cpu *core, const char * const path){
   memset(core, 0, sizeof(cpu));
   
   program = fopen(path, "r+");
+  puts(path);
   assert(program);
   assert(read_page(0, NULL));
   load_page(core, 0);

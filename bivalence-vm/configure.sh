@@ -11,4 +11,5 @@ export INSTALL_DIR="/usr/bin"
 # 1. LFU
 # 2. LRU
 # 3. Both
+# 4. mmap()
 export PRA=3
