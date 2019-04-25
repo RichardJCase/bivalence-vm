@@ -2,14 +2,25 @@
 #include "cpu.h"
 #include "paging.h"
 #include "page_test.h"
+#include "stdio.h"
+#include <stdlib.h>
+#include <string.h>
 
 static void replacement_test(void){
-  for(size_t i = 0; i < NUM_PAGE; i++)
-    assert(read_page(PAGE_SIZE * i, NULL));
+  for(size_t i = 0; i < NUM_PAGE + 1; i++)
+    assert(read_page(0, NULL));
 
   size_t page_index = NUM_PAGE;
-  assert(read_page(PAGE_SIZE * NUM_PAGE, &page_index));
-  assert(page_index == 0);
+  assert(read_page(0, &page_index));
+
+  for(size_t i = 0; i < NUM_PAGE; i++)
+    printf("Uses: %zu\n", page_table[i].uses);
+
+  for(size_t i = 0; i < NUM_PAGE; i++)
+    printf("ID: %zu\n", page_table[i].use_id);
+
+  printf("page test: %zu\n", page_index);
+  assert(page_index == 1);
 }
 
 static void read_page_test(void){

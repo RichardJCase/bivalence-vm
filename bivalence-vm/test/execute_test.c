@@ -4,21 +4,24 @@
 
 #include "execute_test.h"
 
-FILE *program;
 cpu cores[MAX_THREADS] = {0};
 
 void run_prog(cpu *core, const char * const path){
-  if(program)
-    fclose(program);
-
-  memset(core, 0, sizeof(cpu));
+  //TODO: make responsive to mmap
+  unused(core);
+  unused(path);
   
-  program = fopen(path, "r+");
-  puts(path);
-  assert(program);
-  assert(read_page(0, NULL));
-  load_page(core, 0);
-  assert(execute(core));
+  /* if(program) */
+  /*   fclose(program); */
+
+  /* memset(core, 0, sizeof(cpu)); */
+
+  /* program = fopen(path, "r+"); */
+  /* puts(path); */
+  /* assert(program); */
+  /* assert(read_page(0, NULL)); */
+  /* load_page(core, 0); */
+  /* assert(execute(core)); */
 }
 
 void assign_test(cpu *core){
@@ -64,5 +67,5 @@ void execute_test(void){
   mem_test(&cpu);
   logic_test(&cpu);
   library_test(&cpu);
-  fclose(program);
+  //fclose(program);
 }

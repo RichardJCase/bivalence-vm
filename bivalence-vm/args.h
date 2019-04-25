@@ -2,6 +2,8 @@
 
 #include "common.h"
 
+extern size_t program_size;
+
 typedef enum {
   HELP,
   NUM_FLAGS

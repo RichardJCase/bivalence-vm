@@ -1,6 +1,7 @@
 #include "args.h"
 
 static args program_args = {0};
+size_t program_size = 0;
 
 static bool usage(void){
 #define T "\t"
@@ -36,10 +37,14 @@ static bool open_program(const char * const path){
   }
 
   struct stat st;
-  stat(pgroam &st);
-  program_size = st.st_size;
+  stat(path, &st);
+  long st_size = st.st_size;
+  if(st_size < 0)
+    return false;
 
-  program = mmap(NULL, program_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_POPULATE, tmpfile);
+  program_size = (size_t)st_size;
+  
+  program = mmap(NULL, program_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_POPULATE, tmpfile, 0);
 #else
   program = fopen(path, "r+");
 #endif

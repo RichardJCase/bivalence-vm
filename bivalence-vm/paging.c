@@ -1,24 +1,8 @@
 #include <unistd.h>
 #include "common.h"
 
-#define LFU 1
-#define LRU 2
-#define BOTH 3
-#define MMAP 4
-
-typedef struct {
-  bool written;
-  size_t use_id, uses, start;
-
-#if PRA == MMAP
-  byte *memory;
-#else
-  byte memory[PAGE_SIZE];
-#endif
-} page;
-
 static size_t page_counter = 0;
-static page page_table[NUM_PAGE] = {0};
+page page_table[NUM_PAGE] = {0};
 
 #if PRA == MMAP
 byte *program = NULL;
@@ -78,10 +62,20 @@ static void increment_last_used(size_t page_index){
 }
 
 static void lfu_available_page(size_t *lfu_pages){
-  size_t lfu_value = 0;
-  size_t page_count = 0;
-  for(size_t i = 0; i < NUM_PAGE; i++){
-    if(page_table[i].uses < lfu_value)
+  if(!page_table[0].use_id)
+    return;
+  
+  size_t lfu_value = page_table[0].uses;
+  size_t page_count = 1;
+
+  for(size_t i = 1; i < NUM_PAGE; i++){
+    if(!page_table[i].use_id){
+      memset(lfu_pages, 0, page_count * sizeof(page_count));
+      lfu_pages[0] = i;
+      return;
+    }
+    
+    if(page_table[i].uses > lfu_value)
       continue;
 
     if(page_table[i].uses == lfu_value){
@@ -89,10 +83,10 @@ static void lfu_available_page(size_t *lfu_pages){
       continue;
     }
 
+    memset(lfu_pages, 0, page_count * sizeof(page_count));
+    page_count = 1;
     lfu_value = page_table[i].uses;
-    
-    memset(lfu_pages, 0, page_count);
-    page_count = 1;    
+    lfu_pages[0] = i;
   }
 }
 
@@ -101,18 +95,14 @@ static size_t lru_available_page(size_t *pages, size_t size){
   
   for(size_t i = 0; i < size; i++){
     size_t use_id = page_table[pages[i]].use_id;
-    if(!use_id){
-      oldest_index = i;
-      break;
-    }
+    if(!use_id)
+      return i;
     
     if(use_id < oldest_value){
       oldest_index = i;
       oldest_value = use_id;
     }
   }
-
-  increment_last_used(oldest_index);
   
   return oldest_index;
 }
@@ -134,7 +124,7 @@ static size_t next_available_page(void){
   for(size_t i = 0; i < NUM_PAGE; i++)
     pages[i] = i;
   
-  optimal = lru_available_page(&pages, NUM_PAGE);
+  optimal = lru_available_page(pages, NUM_PAGE);
 #elif PRA == BOTH
   size_t num_lfu_pages;
   for(num_lfu_pages = 1; num_lfu_pages < NUM_PAGE; num_lfu_pages++){
@@ -143,41 +133,29 @@ static size_t next_available_page(void){
   }
   
   optimal = lru_available_page(lfu_pages, num_lfu_pages);
+#elif PRA == MMAP
+  unused(lru_available_page);
+  unused(lfu_available_page);
 #else
-  #pragma GCC error "Invalid configuration of PRA parameter."
+#pragma GCC error "Invalid configuration of PRA parameter."
 #endif
 
+  unused(resort_pages);
+#if PRA == MMAP
+  unused(optimal);
+  unused(resort_pages);
+  unused(increment_usage);
+  unused(increment_last_used);
+  return 0;
+#else
   resort_pages(optimal);
+  increment_usage(optimal);
+  increment_last_used(optimal);
   return optimal;
-}
-
-bool read_page(size_t page_start, size_t *page_index){
-  size_t tmp;
-  if(!page_index)
-    page_index = &tmp;
-
-  *page_index = next_available_page();
-  page page = page_table[*page_index];
-
-#if PRA != MMAP
-  if(page.written)
-    fwrite(page.memory, 1, PAGE_SIZE, program);
-  
-  long pos = fseek(program, (long)page_start, SEEK_CUR);
-  if(pos == -1) return false;
-  
-  size_t bytes_read = fread(page.memory, 1, PAGE_SIZE, program);
-  memset(page.memory + bytes_read, 0, PAGE_SIZE - bytes_read);
-#else
-  page.memory = program + page_start;
 #endif
-
-  page.start = page_start;
-  
-  return true;
 }
 
-static size_t page_search(size_t page_start){
+static bool page_cached(size_t page_start, size_t *index){
   size_t high = NUM_PAGE;
   size_t low = 0;
   while(low < high){
@@ -188,31 +166,58 @@ static size_t page_search(size_t page_start){
     }else if(page_table[pivot].start > page_start - PAGE_SIZE){
       high = pivot - 1;
     }else{
-      return pivot;
+      *index = pivot;
+      return true;
     }
   }
   
-  return NUM_PAGE;
+  return false;
+}
+
+bool read_page(size_t page_start, size_t *page_index){
+  size_t tmp;
+  if(!page_index)
+    page_index = &tmp;
+
+  *page_index = next_available_page();
+  page *page = &page_table[*page_index];
+#if PRA != MMAP
+  if(page->written)
+    fwrite(page->memory, 1, PAGE_SIZE, program);
+  
+  long pos = fseek(program, (long)page_start, SEEK_CUR);
+  if(pos == -1) return false;
+  
+  size_t bytes_read = fread(page->memory, 1, PAGE_SIZE, program);
+  memset(page->memory + bytes_read, 0, PAGE_SIZE - bytes_read);
+#else
+  page->memory = program + page_start;
+#endif
+
+  page->start = page_start;
+  
+  return true;
 }
 
 static bool get_page(size_t page_start, size_t *page_index){
-  *page_index = page_search(page_start); 
-  if(*page_index == NUM_PAGE){
-    if(!read_page(page_start, page_index))
-      return false;
-  }
-
-  increment_usage(*page_index);
-  return true;
+  size_t tmp;
+  if(!page_index)
+    page_index = &tmp;
+  
+  if(page_cached(page_start, page_index))
+    return true;
+  
+  return read_page(page_start, page_index);
 }
 
 bool read_page_bytes(size_t page_start, byte *bytes, size_t size){
 #if PRA == MMAP
-  return (bool)strncpy(bytes, program + page_start, size);
+  unused(get_page);
+  return memcpy((char*)bytes, (char*)program + page_start, size) != 0;
 #else
   if(!size)
     return true;
-
+  
   size_t page_index;
   if(!get_page(page_start, &page_index))
     return false;
@@ -225,7 +230,7 @@ bool read_page_bytes(size_t page_start, byte *bytes, size_t size){
 
 bool write_page_bytes(size_t page_start, byte *bytes, size_t size){
 #if PRA == MMAP
-  return (bool)strncpy(program + page_start, bytes, size);
+  return memcpy((char*)program + page_start, (char*)bytes, size) != 0;
 #else
   if(!size)
     return true;
@@ -249,12 +254,12 @@ void load_page(cpu *core, size_t page_number){
 }
 
 bool next_page(cpu *core){
-#if PRA != MMAP
-  size_t page_index;
+  size_t page_index = 0;
+  
   if(!read_page(core->ebp, &page_index))
     return false;
-#endif
-  
+
   load_page(core, page_index);
+  
   return true;
 }
