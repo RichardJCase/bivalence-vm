@@ -118,7 +118,7 @@ static size_t next_available_page(void){
 #if PRA == LFU
   unused(lru_available_page);
   optimal = lfu_pages[0];
-#elif PRA == LRU
+#elif PRA == LRU || PRA == MMAP
   unused(lfu_available_page);
   size_t pages[NUM_PAGE];
   for(size_t i = 0; i < NUM_PAGE; i++)
@@ -140,19 +140,10 @@ static size_t next_available_page(void){
 #pragma GCC error "Invalid configuration of PRA parameter."
 #endif
 
-  unused(resort_pages);
-#if PRA == MMAP
-  unused(optimal);
-  unused(resort_pages);
-  unused(increment_usage);
-  unused(increment_last_used);
-  return 0;
-#else
   resort_pages(optimal);
   increment_usage(optimal);
   increment_last_used(optimal);
   return optimal;
-#endif
 }
 
 static bool page_cached(size_t page_start, size_t *index){
