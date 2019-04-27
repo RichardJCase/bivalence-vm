@@ -1,6 +1,6 @@
-#include "set.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include "set.h"
 
 void sset_insert(u8 *set, size_t size, u8 item){
   size_t high = size;

@@ -1,21 +1,22 @@
 WARNINGS=-Werror -Wfatal-errors -Wall -Wextra -Wpedantic -Wunused-macros -Wunsafe-loop-optimizations -Wunsuffixed-float-constants -Wtrampolines -Wswitch-enum -Wswitch-default -Wstrict-prototypes -Wstack-protector -Wsign-conversion -Wnull-dereference -Wmultichar -Winline -Wduplicated-cond -Wconversion -Walloc-zero -Walloca $(NOWARNS)
 
-DEFINES=-DMAX_THREADS=$(MAX_THREADS) -DPAGE_SIZE=$(PAGE_SIZE) -DNUM_PAGE=$(NUM_PAGE) -DNUM_GP_REG=$(NUM_GP_REG)
+DEFINES=-DMAX_THREADS=$(MAX_THREADS) -DPAGE_SIZE=$(PAGE_SIZE) -DNUM_PAGE=$(NUM_PAGE) -DNUM_GP_REG=$(NUM_GP_REG) -DPRA=$(PRA)
 
 LIBS=lib/*.a
+LNK=-ldl
 INCLUDES=-Iinclude
 CFLAGS=$(OPLVL) -c $(WARNINGS) $(DEFINES) $(INCLUDES) -fsplit-stack
-TARGET=vm
+TARGET=bvm
 
 .PHONEY: $(LIBS) $(TEST)
 
-OBJ=vm.o args.o paging.o execute.o settings.o
+OBJ=vm.o args.o paging.o execute.o
 
 %.o: %.c
 	$(CC) -o $@ $< $(CFLAGS)
 
 $(TARGET): $(OBJ) $(LIBS)
-	$(CC) -o $@ $^ $(LIBS)
+	$(CC) -o $@ $^ $(LIBS) $(LNK)
 
 $(LIBS):
 	make -C datastructures
@@ -35,5 +36,5 @@ install: $(TARGET)
 	mv $(TARGET) $(INSTALL_DIR)/$(TARGET)
 	rm -f *.o *~
 
-test: $(INSTALL_DIR)/$(TARGET)
-	valgrind -q $(TARGET)
+test: $(TARGET)
+	valgrind -q ./$(TARGET)

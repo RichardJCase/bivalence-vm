@@ -5,7 +5,7 @@
 #define peek(addr, reg) {if(!read_page_bytes(addr, (byte*)&reg, sizeof(reg))) fatal(FAILED_PEEK);}
 
 bool init_cores(void){
-  read_page(0);
+  read_page(0, NULL);
   
   for(size_t i = 0; i < MAX_THREADS; i++)
     load_page(&cores[i], 0);
@@ -20,22 +20,22 @@ static bool mem_op(cpu *core, instruction op){
   switch(op & OP_BITS){
   case POKE_SR:
     poke(addr, core->sr[n]);
-    break;
+    return true;
   case POKE_UR:
     poke(addr, core->ur[n]);
-    break;
+    return true;
   case POKE_FR:
     poke(addr, core->fr[n]);
-    break;
+    return true;
   case PEEK_SR:
     peek(addr, core->sr[n]);
-    break;
+    return true;
   case PEEK_UR:
     peek(addr, core->ur[n]);
-    break;
+    return true;
   case PEEK_FR:
     peek(addr, core->fr[n]);
-    break;
+    return true;
   default:
     return false;
   }
@@ -209,13 +209,12 @@ static bool library_op(cpu *core, instruction op){
   switch(op & OP_BITS){
   case LOAD:
     core->ur[n1] = (u16)dlopen((const char*)&core->ur[n2], (int)core->ur[n3]);
-    break;
+    return (bool)core->ur[n1];
   case SYM:
     core->ur[n1] = (u16)dlsym(&core->ur[n2], (const char*)&core->ur[n3]);
-    break;
+    return (bool)core->ur[n1];
   case CCALL:
-    ((bool (*)(void*))core->ur[n1])(&core->ur[n2]);
-    break;
+    return ((bool (*)(void*))core->ur[n1])(&core->ur[n2]);
   default:
     return false;
   }
@@ -241,7 +240,13 @@ static bool execute_op(cpu *core, instruction op){
 }
 
 static uint64_t next_instruction(cpu *core){
-  //todo: if greater than page size than request next page
+  if(core->ip >= PAGE_SIZE){
+    if(!next_page(core))
+      fatal("Unable to load page.");
+
+    core->ip = 0;
+  }
+
   return core->execution_stack[core->ip++];
 }
 

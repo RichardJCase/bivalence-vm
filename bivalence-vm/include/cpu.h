@@ -4,10 +4,10 @@
 
 typedef uint8_t byte;
 
-typedef struct _cpu {
+typedef struct {
   bool br;
   u8 rr;
-  size_t rp, sp, bp, ip;
+  size_t rp, sp, bp, ip, ebp;
 
   i16 sr[NUM_GP_REG];
   u16 ur[NUM_GP_REG];
