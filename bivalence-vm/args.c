@@ -4,12 +4,9 @@ static args program_args = {0};
 size_t program_size = 0;
 
 static bool usage(void){
-#define T "\t"
-  puts("Usage: bvm [program.b]");
-  puts(T "-h " T "show help");
+  puts(USAGE);
   
   return false;
-#undef T
 }
 
 static bool apply_flags(void){
@@ -32,7 +29,7 @@ static bool open_program(const char * const path){
 #if PRA == MMAP
   int tmpfile = open(path, O_RDWR, 0);
   if(!tmpfile){
-    printf("Unable to open %s\n", path);
+    error_fmt(UNABLE_TO_OPEN, path);
     return false;
   }
 
@@ -50,7 +47,7 @@ static bool open_program(const char * const path){
 #endif
 
   if(!program){
-    printf("Unable to open %s\n", path);
+    error_fmt(UNABLE_TO_OPEN, path);
     return false;
   }
   
