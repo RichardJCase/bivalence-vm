@@ -2,7 +2,7 @@ WARNINGS=-Wall -Wextra -Wpedantic -Wunused-macros -Wunsafe-loop-optimizations -W
 
 DEFINES=-DMAX_THREADS=$(MAX_THREADS) -DPAGE_SIZE=$(PAGE_SIZE) -DNUM_PAGE=$(NUM_PAGE) -DNUM_GP_REG=$(NUM_GP_REG) -DPRA=$(PRA)
 
-LIBS=../lib/datastructures.a
+#LIBS=../lib/*.a
 LNK=-ldl
 INCLUDE=-I../include
 CFLAGS=-c $(WARNINGS) -Werror -Wfatal-errors $(DEFINES) $(INCLUDE)

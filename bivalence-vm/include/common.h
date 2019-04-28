@@ -11,7 +11,6 @@
 #include "cpu.h"
 #include "paging.h"
 #include "operations.h"
-#include "datastructures.h"
 
 #define unused(x) (void)(x)
 
