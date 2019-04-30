@@ -2,14 +2,12 @@
 
 static args program_args = {0};
 size_t program_size = 0;
+FILE *log_file = NULL;
 
 static bool usage(void){
-#define T "\t"
-  puts("Usage: bvm [program.b]");
-  puts(T "-h " T "show help");
+  puts(USAGE);
   
   return false;
-#undef T
 }
 
 static bool apply_flags(void){
@@ -32,7 +30,7 @@ static bool open_program(const char * const path){
 #if PRA == MMAP
   int tmpfile = open(path, O_RDWR, 0);
   if(!tmpfile){
-    printf("Unable to open %s\n", path);
+    error_fmt(UNABLE_TO_OPEN, path);
     return false;
   }
 
@@ -50,7 +48,7 @@ static bool open_program(const char * const path){
 #endif
 
   if(!program){
-    printf("Unable to open %s\n", path);
+    error_fmt(UNABLE_TO_OPEN, path);
     return false;
   }
   
@@ -70,6 +68,16 @@ static bool check_args(void){
   return open_program(program_args.nonflag_args[program_args.nonflag_index]);
 }
 
+bool open_log_file(void){
+#if LOG_FILE == stderr
+  log_file = stderr;
+  return true;
+#else
+  log_file = fopen(#LOG_FILE, "w");
+  return log_file;
+#endif
+}
+
 bool process_args(u32 argc, char **argv){
   for(size_t i = 0; i < argc; i++){
     if(argv[0][0] == '-'){
@@ -81,5 +89,8 @@ bool process_args(u32 argc, char **argv){
     }
   }
 
+  if(!open_log_file())
+    return false;
+  
   return check_args();
 }

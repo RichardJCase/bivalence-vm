@@ -242,7 +242,7 @@ static bool execute_op(cpu *core, instruction op){
 static uint64_t next_instruction(cpu *core){
   if(core->ip >= PAGE_SIZE){
     if(!next_page(core))
-      fatal("Unable to load page.");
+      fatal(UNABLE_TO_LOAD_PAGE);
 
     core->ip = 0;
   }
@@ -254,10 +254,10 @@ bool execute(cpu *core){
   instruction current_instruction = next_instruction(core);
   while(current_instruction != STOP){
     if(current_instruction == UNINIT)
-      fatal("STOP not reached before uninitialized instruction.");
+      fatal(UNINIT_BEFORE_STOP);
     
     if(!execute_op(core, current_instruction))
-      fatal("Illegal instruction.");
+      fatal(ILLEGAL_INSTRUCTION);
 
     current_instruction = next_instruction(core);
   }

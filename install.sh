@@ -5,6 +5,6 @@ if [[ $EUID -ne 0 ]]; then
    exit 0
 fi
 
-cd vm
+cd bivalence-vm
 ./configure.sh
 make install

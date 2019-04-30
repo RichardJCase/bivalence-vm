@@ -1,8 +1,8 @@
 WARNINGS=-Werror -Wfatal-errors -Wall -Wextra -Wpedantic -Wunused-macros -Wunsafe-loop-optimizations -Wunsuffixed-float-constants -Wtrampolines -Wswitch-enum -Wswitch-default -Wstrict-prototypes -Wstack-protector -Wsign-conversion -Wnull-dereference -Wmultichar -Winline -Wduplicated-cond -Wconversion -Walloc-zero -Walloca $(NOWARNS)
 
-DEFINES=-DMAX_THREADS=$(MAX_THREADS) -DPAGE_SIZE=$(PAGE_SIZE) -DNUM_PAGE=$(NUM_PAGE) -DNUM_GP_REG=$(NUM_GP_REG) -DPRA=$(PRA)
+DEFINES=-DMAX_THREADS=$(MAX_THREADS) -DPAGE_SIZE=$(PAGE_SIZE) -DNUM_PAGE=$(NUM_PAGE) -DNUM_GP_REG=$(NUM_GP_REG) -DPRA=$(PRA) -DLOG_FILE=$(LOG_FILE)
 
-LIBS=lib/*.a
+#LIBS=lib/*.a
 LNK=-ldl
 INCLUDES=-Iinclude
 CFLAGS=$(OPLVL) -c $(WARNINGS) $(DEFINES) $(INCLUDES) -fsplit-stack
@@ -19,7 +19,6 @@ $(TARGET): $(OBJ) $(LIBS)
 	$(CC) -o $@ $^ $(LIBS) $(LNK)
 
 $(LIBS):
-	make -C datastructures
 
 $(TEST):
 	make -C test

@@ -137,7 +137,7 @@ static size_t next_available_page(void){
   unused(lru_available_page);
   unused(lfu_available_page);
 #else
-#pragma GCC error "Invalid configuration of PRA parameter."
+#pragma GCC error INVALID_PRA
 #endif
 
   resort_pages(optimal);
