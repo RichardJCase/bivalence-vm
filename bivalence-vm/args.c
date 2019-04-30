@@ -2,6 +2,7 @@
 
 static args program_args = {0};
 size_t program_size = 0;
+FILE *log_file = NULL;
 
 static bool usage(void){
   puts(USAGE);
@@ -67,6 +68,16 @@ static bool check_args(void){
   return open_program(program_args.nonflag_args[program_args.nonflag_index]);
 }
 
+bool open_log_file(void){
+#if LOG_FILE == stderr
+  log_file = stderr;
+  return true;
+#else
+  log_file = fopen(#LOG_FILE, "w");
+  return log_file;
+#endif
+}
+
 bool process_args(u32 argc, char **argv){
   for(size_t i = 0; i < argc; i++){
     if(argv[0][0] == '-'){
@@ -78,5 +89,8 @@ bool process_args(u32 argc, char **argv){
     }
   }
 
+  if(!open_log_file())
+    return false;
+  
   return check_args();
 }
