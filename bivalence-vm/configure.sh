@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/false
 
 export PAGE_SIZE=1024
 export NUM_PAGE=4

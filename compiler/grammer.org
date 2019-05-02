@@ -1,0 +1,26 @@
+* Keys
+| Alias             | Expression may be substituted anywhere in the grammar for the other |
+| a -> b            | The definition (b) of rule a.                                       |
+| a -> b, c, ..., z | Or'd definitions. a -> b or a -> c or ... a -> z                    |
+| e                 | Empty string.                                                       |
+| 'a'               | Explicit string.                                                    |
+| ID                | Identifier.                                                         |
+
+* Base
+program -> expr_list
+
+expr_list -> expr expr_list, e
+expr -> prop
+
+ID_list -> ID ID_list, e
+result -> func, ID, lit
+
+* Propositions
+prop -> ID ':' defn
+defn -> ID ID_list out_var
+out_var -> '>' ID, e
+
+* Examples
+** Proposition
+   my_prop : add 1 1 > result
+
