@@ -15,10 +15,11 @@ export LOG_FILE="stderr"
 # 4. mmap()
 export PRA=4
 
+#paths
+export VM_INC="$PWD/bivalence-vm/include"
 
 #compile options
 export DEFINES="-DMAX_THREADS=$(echo $MAX_THREADS) -DPAGE_SIZE=$(echo $PAGE_SIZE) -DNUM_PAGE=$(echo $NUM_PAGE) -DNUM_GP_REG=$(echo $NUM_GP_REG) -DPRA=$(echo $PRA) -DLOG_FILE=$(echo $LOG_FILE)"
-
 export WARNINGS="-Werror -Wfatal-errors -Wall -Wextra -Wpedantic -Wunused-macros -Wunsafe-loop-optimizations -Wunsuffixed-float-constants -Wtrampolines -Wswitch-enum -Wswitch-default -Wstrict-prototypes -Wstack-protector -Wsign-conversion -Wnull-dereference -Wmultichar -Winline -Wduplicated-cond -Wconversion -Walloc-zero -Walloca"
 
 export CFLAGS="$(echo $OPLVL) -c $(echo $WARNINGS) $(echo $DEFINES) -fsplit-stack"

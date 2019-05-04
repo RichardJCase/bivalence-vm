@@ -1,5 +1,5 @@
 LNK=-ldl
-INCLUDES=-Iinclude
+INCLUDES=-I$(VM_INC)
 TARGET=bvm
 
 .PHONEY: $(LIBS) $(TEST)

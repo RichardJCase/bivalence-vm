@@ -1,10 +1,8 @@
 LNK=-ldl
-INCLUDES=-I../include
+INCLUDES=-I$(VM_INC)
 VMOBJS=../paging.o ../execute.o ../args.o
 
 TARGET=unit_main
-
-.PHONEY: $(LIBS)
 
 OBJ=unit_main.o page_test.o execute_test.o $(VMOBJS)
 
@@ -13,9 +11,6 @@ OBJ=unit_main.o page_test.o execute_test.o $(VMOBJS)
 
 $(TARGET): $(OBJ) $(TESTOBJ) $(LIBS) $(LNK)
 	$(CC) -o $@ $^
-
-$(LIBS):
-	make -C ../datastructures
 
 clean:
 	rm -f *.o *~ $(TARGET) $(TEST_TARGET) test.b
