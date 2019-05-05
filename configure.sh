@@ -17,6 +17,7 @@ export PRA=4
 
 #paths
 export VM_INC="$PWD/bivalence-vm/include"
+export COMP_INC="$PWD/compiler/include"
 
 #compile options
 export DEFINES="-DMAX_THREADS=$(echo $MAX_THREADS) -DPAGE_SIZE=$(echo $PAGE_SIZE) -DNUM_PAGE=$(echo $NUM_PAGE) -DNUM_GP_REG=$(echo $NUM_GP_REG) -DPRA=$(echo $PRA) -DLOG_FILE=$(echo $LOG_FILE)"
