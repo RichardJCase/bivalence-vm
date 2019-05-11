@@ -1,26 +1,16 @@
-WARNINGS=-Wall -Wextra -Wpedantic -Wunused-macros -Wunsafe-loop-optimizations -Wunsuffixed-float-constants -Wtrampolines -Wswitch-enum -Wswitch-default -Wstrict-prototypes -Wstack-protector -Wsign-conversion -Wnull-dereference -Wmultichar -Winline -Wduplicated-cond -Wconversion -Walloc-zero -Walloca $(NOWARNS)
-
-DEFINES=-DMAX_THREADS=$(MAX_THREADS) -DPAGE_SIZE=$(PAGE_SIZE) -DNUM_PAGE=$(NUM_PAGE) -DNUM_GP_REG=$(NUM_GP_REG) -DPRA=$(PRA)
-
-#LIBS=../lib/*.a
 LNK=-ldl
-INCLUDE=-I../include
-CFLAGS=-c $(WARNINGS) -Werror -Wfatal-errors $(DEFINES) $(INCLUDE)
+INCLUDES=-I$(VM_INC)
+VMOBJS=../paging.o ../execute.o ../args.o
 
 TARGET=unit_main
 
-.PHONEY: $(LIBS)
-
-OBJ=unit_main.o set_test.o page_test.o execute_test.o ../paging.o ../execute.o
+OBJ=unit_main.o page_test.o execute_test.o $(VMOBJS)
 
 %.o: %.c
-	$(CC) -o $@ $< $(CFLAGS)
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES)
 
 $(TARGET): $(OBJ) $(TESTOBJ) $(LIBS) $(LNK)
 	$(CC) -o $@ $^
-
-$(LIBS):
-	make -C ../datastructures
 
 clean:
 	rm -f *.o *~ $(TARGET) $(TEST_TARGET) test.b

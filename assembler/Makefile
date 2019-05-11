@@ -1,10 +1,9 @@
-LNK=-ldl
-INCLUDES=-I$(VM_INC)
-TARGET=bvm
+INCLUDES=-I$(VM_INC) -I$(COMP_INC)
+TARGET=bas
 
 .PHONEY: $(LIBS) $(TEST)
 
-OBJ=vm.o args.o paging.o execute.o
+OBJ=as.o
 
 %.o: %.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES)
@@ -19,8 +18,6 @@ $(TEST):
 
 clean:
 	rm -f *.o *~ $(TARGET)
-	rm -f lib/*.a
-	make -C test clean
 
 re: clean $(TARGET)
 

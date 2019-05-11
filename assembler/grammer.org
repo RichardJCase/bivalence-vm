@@ -1,0 +1,7 @@
+* Syntax
+[instruction] [args]
+; [comment]
+DATA [8 bit uints]
+
+* instructions
+* registers

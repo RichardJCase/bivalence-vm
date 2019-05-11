@@ -1,0 +1,78 @@
+* Keys
+| a = b             | a is an alias of b                               |
+| a -> b            | The definition (b) of rule a.                    |
+| a -> b, c, ..., z | Or'd definitions. a -> b or a -> c or ... a -> z |
+| e                 | Empty string.                                    |
+| 'a'               | Explicit string.                                 |
+| ID                | Identifier alpha [alphanumeric, underscore]      |
+
+* Aliases
+TYPE = ID
+
+* Base
+program -> expr_list
+
+expr_list -> expr expr_list, e
+expr -> lemma
+
+param_list -> TYPE ID param_list, e
+result -> app, ID, lit
+
+ID_list -> ID ID_list, e
+
+* Lemma
+lemma -> sig '->' prop_list defn
+sig -> TYPE ID param_list
+defn -> app, imp
+
+app -> ID ID_list out_vars
+out_vars -> '>' ID_list
+
+* Propositions
+prop_list -> prop prop_list, e
+prop -> ID ':' defn
+
+* Implication
+imp -> ID '->' prop_list_head
+prop_list_head -> ID_list
+
+* Semantics
+** import 
+process file, adding info to symbol table
+
+import [filename]
+** native
+definition for an external c function to be loaded
+
+native -> 'native' sig
+** Types definitions
+**** Basic Types
+type [type alias] [type] [: [derived types]]
+space [type alias] [space] [: [derived types]]
+const ID [value]
+ord ID_list
+
+**** Groups
+group [name] ID_list (ID list is lemmas that must hold) [: [derived types]]
+These follow rules of inheritance as in other languages, such that it can be considered a type rather than an abstract concept (such as in haskell)
+
+**** Arbitrary
+'*' is an arbitrary type, determined by use at compile time. Limited use with groups.
+
+* Examples
+** Proposition
+   my_prop: add 1 1 > result
+** Lemma
+   my_lemma ->
+      a: connect "google.com"
+      b: send_message "GET /"
+      c: get_response
+      d: and a b
+      and c d
+** Implication
+   upload_fun ->
+      a: connect_to_db
+      b: add_cat_photos
+      c: close_db
+      d: a -> b, c
+      and a d
