@@ -2,8 +2,6 @@
 #include "strings.h"
 #include "parsefuncs.h"
 
-#define STRING_EQUAL(s1, s2) (0 == strcmp(s1, s2))
-
 FILE *outfile;
 
 char *opcode_table[] = {
@@ -46,18 +44,21 @@ static void usage(void){
 }
 
 //todo: place in strings file once it is made in the compiler
-bool next_token(const char *buffer, char *out_buffer){
-  const char *start = buffer;
+bool next_token(const char **buffer, token out_buffer){
   size_t n = 0;
-  
-  while(*buffer != ' ' && *buffer != '\t')
-    ++buffer;
 
-  while(*buffer != ' ' && *buffer != '\t'){
+  memset(out_buffer, 0, MAX_TOKEN_SIZE);
+  
+  while(is_whitespace(*buffer))
+    ++*buffer;
+
+  const char *start = *buffer;
+  
+  while(**buffer && !is_whitespace(*buffer)){
     if(++n >= MAX_TOKEN_SIZE)
       return false;
     
-    ++buffer;    
+    ++*buffer;
   }
 
   if(!n)
@@ -68,53 +69,47 @@ bool next_token(const char *buffer, char *out_buffer){
   return true;
 }
 
-static void process_instruction(const char *line){
-  while(*line == '\t' || *line == ' ')
-    ++line;
-
-  char token[MAX_TOKEN_SIZE];
-  next_token(line, token);
-
-  if(STRING_EQUAL("poke", token))
+static void process_instruction(const token token, const char *line){
+  if(string_equal("poke", token))
     poke_parse(line);
-  else if(STRING_EQUAL("peek", token))
+  else if(string_equal("peek", token))
     peek_parse(line);
-  else if(STRING_EQUAL("add", token))
+  else if(string_equal("add", token))
     add_parse(line);
-  else if(STRING_EQUAL("sub", token))
+  else if(string_equal("sub", token))
     sub_parse(line);
-  else if(STRING_EQUAL("mul", token))
+  else if(string_equal("mul", token))
     mul_parse(line);
-  else if(STRING_EQUAL("div", token))
+  else if(string_equal("div", token))
     div_parse(line);
-  else if(STRING_EQUAL("and", token))
+  else if(string_equal("and", token))
     and_parse(line);
-  else if(STRING_EQUAL("or", token))
+  else if(string_equal("or", token))
     or_parse(line);
-  else if(STRING_EQUAL("xor", token))
+  else if(string_equal("xor", token))
     xor_parse(line);
-  else if(STRING_EQUAL("mov", token))
+  else if(string_equal("mov", token))
     mov_parse(line);
-  else if(STRING_EQUAL("call", token))
+  else if(string_equal("call", token))
     call_parse(line);
-  else if(STRING_EQUAL("jmp", token))
+  else if(string_equal("jmp", token))
     jmp_parse(line);
-  else if(STRING_EQUAL("ret", token))
+  else if(string_equal("ret", token))
     ret_parse(line);
-  else if(STRING_EQUAL("stop", token))
+  else if(string_equal("stop", token))
     stop_parse(line);
 }
 
 static void process(const char *line){
-  char token[MAX_TOKEN_SIZE];
+  token token;
 
-  if(!next_token(line, token))
+  if(!next_token(&line, token))
     return;
 
   if(token[0] == ';')
     return;
 
-  if(STRING_EQUAL(token, "DATA")){
+  if(string_equal(token, "DATA")){
     int data;
     i32 ret = sscanf(line, "%d", &data);
     while(ret > 0){
@@ -128,7 +123,7 @@ static void process(const char *line){
     }
   }
   
-  process_instruction(line);
+  process_instruction(token, line);
 }
 
 static bool assemble(FILE *file){

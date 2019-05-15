@@ -1,9 +1,12 @@
 #pragma once
 
-#define MAX_TOKEN_SIZE 256
-
 #include "int.h"
 
-bool string_equal(const char *s1, const char *s2);
+#define MAX_TOKEN_SIZE 256
 
-bool next_token(const char *buffer, char *token);
+#define string_equal(s1, s2) (0 == strcmp(s1, s2))
+#define is_whitespace(s) (*s == '\t' || *s == ' ' || *s == '\n')
+
+typedef char token[MAX_TOKEN_SIZE];
+
+bool next_token(const char **buffer, char *token);

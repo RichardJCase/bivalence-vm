@@ -1,6 +1,22 @@
+#include "strings.h"
 #include "parsefuncs.h"
 
-void poke_parse(const char *line){unused(line);}
+typedef enum {
+  none,
+  sr,
+  ur,
+  fr,
+  addr,
+  lit
+} parse_type;
+
+void poke_parse(const char *line){
+  token token;
+  next_token(&line, token);
+
+  puts(token);
+}
+
 void peek_parse(const char *line){unused(line);}
 void add_parse(const char *line){unused(line);}
 void sub_parse(const char *line){unused(line);}
