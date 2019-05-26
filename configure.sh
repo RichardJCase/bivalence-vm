@@ -13,7 +13,7 @@ export LOG_FILE="stderr"
 # 2. LRU
 # 3. Both
 # 4. mmap()
-export PRA=4
+export PRA=1
 
 #paths
 export VM_INC="$PWD/bivalence-vm/include"

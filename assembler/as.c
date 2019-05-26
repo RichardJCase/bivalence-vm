@@ -1,8 +1,11 @@
 #include "common.h"
 #include "strings.h"
 #include "parsefuncs.h"
+#include "errno.h"
 
-FILE *outfile;
+FILE *infile = NULL,
+  *outfile = NULL,
+  *log_file = NULL;
 
 char *opcode_table[] = {
   "poke",
@@ -39,34 +42,7 @@ void (*parse_functions[])(const char*) = {
 };
 
 static void usage(void){
-  puts("Usage: bas [file]");
-  exit(1);
-}
-
-//todo: place in strings file once it is made in the compiler
-bool next_token(const char **buffer, token out_buffer){
-  size_t n = 0;
-
-  memset(out_buffer, 0, MAX_TOKEN_SIZE);
-  
-  while(is_whitespace(*buffer))
-    ++*buffer;
-
-  const char *start = *buffer;
-  
-  while(**buffer && !is_whitespace(*buffer)){
-    if(++n >= MAX_TOKEN_SIZE)
-      return false;
-    
-    ++*buffer;
-  }
-
-  if(!n)
-    return false;
-
-  strncpy(out_buffer, start, n);
-
-  return true;
+  fatal("Usage: bas [file]");
 }
 
 static void process_instruction(const token token, const char *line){
@@ -113,10 +89,8 @@ static void process(const char *line){
     int data;
     i32 ret = sscanf(line, "%d", &data);
     while(ret > 0){
-      if(data > 255){
-	puts("Number exceeds byte limit.");
-	exit(failure);
-      }
+      if(data > 255)
+	fatal("Number exceeds byte limit.");
 
       char byte = (char)data;
       fwrite(&byte, 1, 1, outfile);
@@ -126,34 +100,62 @@ static void process(const char *line){
   process_instruction(token, line);
 }
 
-static bool assemble(FILE *file){
+static bool assemble(void){
   size_t line_length;
   ssize_t read;
   char *line = NULL;
 
-  read = getline(&line, &line_length, file);
+  read = getline(&line, &line_length, infile);
   while(read != -1){
     process(line);
-    read = getline(&line, &line_length, file);
+    read = getline(&line, &line_length, infile);
   }
 
   free(line);
   return true;
 }
 
+static void open_file(FILE **file, const char *name, const char *mode)
+{
+  *file = fopen(name, mode);
+  if(!file)
+    fatal_fmt("Unable to open: '%s'", name);
+}
+
+static void open_outfile(const char *in_file_name)
+{
+  size_t pos = (size_t)strchr(in_file_name, '.') - (size_t)in_file_name;
+  char *name = calloc(1, pos + 2);
+  strncpy(name, in_file_name, pos);
+  strcat(name, ".b");
+  
+  open_file(&outfile, name, "w");
+  
+  free(name);
+}
+
+void shutdown(void)
+{
+  if(outfile)
+    fclose(outfile);
+
+  if(infile)
+    fclose(infile);
+
+  exit(failure);
+}
+
 int main(int argc, char **argv){
+  log_file = stdout;
   if(argc != 2)
     usage();
 
-  FILE *file = fopen(argv[1], "r");
-  if(!file){
-    printf("Unable to open: %s\n", argv[1]);
-    return failure;
-  }
-
-  bool assembled = assemble(file);
+  open_file(&infile, argv[1], "r");
+  open_outfile(argv[1]);
   
-  fclose(file);
+  bool assembled = assemble();
+  
+  shutdown();
   
   return assembled ? success : failure;
 }

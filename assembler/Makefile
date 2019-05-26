@@ -3,7 +3,7 @@ TARGET=bas
 
 .PHONEY: $(LIBS) $(TEST)
 
-OBJ=as.o parsefuncs.o
+OBJ=as.o parsefuncs.o ../compiler/strings.o
 
 %.o: %.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES)

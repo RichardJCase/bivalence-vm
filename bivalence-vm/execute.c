@@ -252,10 +252,10 @@ static uint64_t next_instruction(cpu *core){
 
 bool execute(cpu *core){
   instruction current_instruction = next_instruction(core);
-  while(current_instruction != STOP){
+  while(current_instruction != STOP && (signed)current_instruction != EOF){
     if(current_instruction == UNINIT)
       fatal(UNINIT_BEFORE_STOP);
-    
+
     if(!execute_op(core, current_instruction))
       fatal(ILLEGAL_INSTRUCTION);
 

@@ -31,6 +31,9 @@ Instructions are equal length (64 bits) to reduce the number of additions and fo
 | $mem  | register/memory  |
 | $lit  | literal          |
 | $val  | literal/register |
+
+addr and lit are equivelent when written
+
 ** Memory
 poke $r, $addr
 peek $r, $addr
