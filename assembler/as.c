@@ -106,7 +106,7 @@ static bool assemble(void){
   char *line = NULL;
 
   read = getline(&line, &line_length, infile);
-  while(read != -1){
+  while(read != EOF){
     process(line);
     read = getline(&line, &line_length, infile);
   }
@@ -118,13 +118,18 @@ static bool assemble(void){
 static void open_file(FILE **file, const char *name, const char *mode)
 {
   *file = fopen(name, mode);
-  if(!file)
+  if(!(*file))
     fatal_fmt("Unable to open: '%s'", name);
 }
 
 static void open_outfile(const char *in_file_name)
 {
-  size_t pos = (size_t)strchr(in_file_name, '.') - (size_t)in_file_name;
+  size_t pos = (size_t)strchr(in_file_name, '.');
+  if(!pos)
+    fatal("Invalid file name.");
+  
+  pos -= (size_t)in_file_name;
+    
   char *name = calloc(1, pos + 2);
   strncpy(name, in_file_name, pos);
   strcat(name, ".b");
@@ -141,8 +146,6 @@ void shutdown(void)
 
   if(infile)
     fclose(infile);
-
-  exit(failure);
 }
 
 int main(int argc, char **argv){

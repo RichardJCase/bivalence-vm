@@ -17,7 +17,7 @@ $(TEST):
 	make -C test
 
 clean:
-	rm -f *.o *~ $(TARGET)
+	rm -f $(OBJ) *~ $(TARGET) test*
 
 re: clean $(TARGET)
 
