@@ -22,7 +22,16 @@ enum {
   CALL_SR,
   CALL_FR,
   JMP_SR,
-  JMP_FR
+  JMP_FR,
+  LOAD_SR,
+  LOAD_FR,
+  LOAD_ADDR,
+  SYM_SR,
+  SYM_FR,
+  SYM_ADDR,
+  CCALL_SR,
+  CCALL_FR,
+  CCALL_ADDR
 };
 
 typedef enum {
@@ -141,8 +150,9 @@ parse_type agnostic_arg(const char **line, u64 *instruction){
 }
 
 #define ANY_ARG agnostic_arg(&line, &instruction)
-#define LIT_ARG if(!IS_LITERAL_TYPE(ANY_ARG)) INVALID_ARGUMENT;
-#define REG_ARG if(!IS_REGISTER_TYPE(ANY_ARG)) INVALID_ARGUMENT;
+#define LIT_ARG if(!IS_LITERAL_TYPE(ANY_ARG)) INVALID_ARGUMENT
+#define REG_ARG if(!IS_REGISTER_TYPE(ANY_ARG)) INVALID_ARGUMENT
+#define UR_ARG if(ANY_ARG != UR) INVALID_ARGUMENT
 
 void poke_parse(const char *line){
   ANY_REG_INST(POKE);
@@ -221,6 +231,20 @@ void stop_parse(const char *line){
   WRITE_LITERAL_INSTRUCTION(STOP);
 }
 
-void load_parse(const char *line){unused(line);}
-void sym_parse(const char *line){unused(line);}
-void ccall_parse(const char *line){unused(line);}
+#define WRITE_LIB_INST(INST)			\
+  PARSE_INST(INST, ALLOW_UR);			\
+  UR_ARG;					\
+  UR_ARG;					\
+  WRITE_INSTRUCTION				
+
+void load_parse(const char *line){
+  WRITE_LIB_INST(LOAD);
+}
+
+void sym_parse(const char *line){
+  WRITE_LIB_INST(SYM);
+}
+
+void ccall_parse(const char *line){
+  WRITE_LIB_INST(CCALL);
+}

@@ -207,13 +207,13 @@ static bool library_op(cpu *core, instruction op){
   n3 = (register_number)(op & (REG_MASK << (OP_BITS + 2 * REG_BITS)));
   
   switch(op & OP_BITS){
-  case LOAD:
+  case LOAD_UR:
     core->ur[n1] = (u16)dlopen((const char*)&core->ur[n2], (int)core->ur[n3]);
     return (bool)core->ur[n1];
-  case SYM:
+  case SYM_UR:
     core->ur[n1] = (u16)dlsym(&core->ur[n2], (const char*)&core->ur[n3]);
     return (bool)core->ur[n1];
-  case CCALL:
+  case CCALL_UR:
     return ((bool (*)(void*))core->ur[n1])(&core->ur[n2]);
   default:
     return false;

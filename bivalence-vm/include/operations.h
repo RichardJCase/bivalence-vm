@@ -48,9 +48,9 @@ typedef enum {
   RET,
   STOP,
   
-  LOAD,
-  SYM,
-  CCALL
+  LOAD_UR,
+  SYM_UR,
+  CCALL_UR
 } opcode;
 
 typedef uint64_t instruction;
