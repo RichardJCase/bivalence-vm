@@ -102,13 +102,11 @@ inline bool is_literal(argument *arg){
 #define ALLOW_LIT 1<<3
 
 #define PARSE_INST(INST, ALLOW_MASK)		\
-  u64 instruction;				\
-  argument reg;					\
-  next_arg(&line, &reg);			\
-  if(!is_register(&reg))			\
-    INVALID_ARGUMENT;				\
-  						\
-  switch(reg.type){				\
+  u64 instruction = 0;				\
+  argument arg;					\
+  next_arg(&line, &arg);			\
+						\
+  switch(arg.type){				\
   case SR:					\
     if(!(ALLOW_MASK & ALLOW_UR))		\
       INVALID_ARGUMENT;				\
@@ -208,9 +206,47 @@ void xor_parse(const char *line){
   WRITE_BIT_INST(XOR);
 }
 
+#define MOV_REG_PARSE(REG)						\
+  switch(assign.type){							\
+  case SR:								\
+    instruction = MOV_ ## REG ## _SR + (reg.value << OP_BITS) + (assign.value << (OP_BITS + REG_BITS)); \
+    break;								\
+  case UR:								\
+    instruction = MOV_ ## REG ## _UR + (reg.value << OP_BITS) + (assign.value << (OP_BITS + REG_BITS)); \
+    break;								\
+  case FR:								\
+    instruction = MOV_ ## REG ## _FR + (reg.value << OP_BITS) + (assign.value << (OP_BITS + REG_BITS)); \
+    break;								\
+  case LIT:								\
+    instruction = MOV_ ## REG ## _N + (reg.value << OP_BITS) + (assign.value << (OP_BITS + REG_BITS)); \
+    break;								\
+  case NONE:								\
+  default:								\
+    INVALID_ARGUMENT;							\
+  }
+
 void mov_parse(const char *line){
-  //todo: own special logic
-  unused(line);
+  u64 instruction = 0;
+  argument reg, assign;
+  next_arg(&line, &reg);
+  next_arg(&line, &assign);
+
+  switch(reg.type){
+  case SR:
+    MOV_REG_PARSE(SR);
+    break;
+  case UR:
+    MOV_REG_PARSE(UR);
+    break;
+  case FR:
+    MOV_REG_PARSE(FR);
+  case LIT:
+  case NONE:
+  default:
+    INVALID_ARGUMENT;
+  }
+
+  WRITE_INSTRUCTION;
 }
 
 void call_parse(const char *line){
