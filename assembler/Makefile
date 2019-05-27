@@ -3,7 +3,7 @@ TARGET=bas
 
 .PHONEY: $(LIBS) $(TEST)
 
-OBJ=as.o
+OBJ=as.o parsefuncs.o ../compiler/strings.o
 
 %.o: %.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES)
@@ -17,7 +17,7 @@ $(TEST):
 	make -C test
 
 clean:
-	rm -f *.o *~ $(TARGET)
+	rm -f $(OBJ) *~ $(TARGET) test*
 
 re: clean $(TARGET)
 

@@ -207,13 +207,13 @@ static bool library_op(cpu *core, instruction op){
   n3 = (register_number)(op & (REG_MASK << (OP_BITS + 2 * REG_BITS)));
   
   switch(op & OP_BITS){
-  case LOAD:
+  case LOAD_UR:
     core->ur[n1] = (u16)dlopen((const char*)&core->ur[n2], (int)core->ur[n3]);
     return (bool)core->ur[n1];
-  case SYM:
+  case SYM_UR:
     core->ur[n1] = (u16)dlsym(&core->ur[n2], (const char*)&core->ur[n3]);
     return (bool)core->ur[n1];
-  case CCALL:
+  case CCALL_UR:
     return ((bool (*)(void*))core->ur[n1])(&core->ur[n2]);
   default:
     return false;
@@ -252,10 +252,10 @@ static uint64_t next_instruction(cpu *core){
 
 bool execute(cpu *core){
   instruction current_instruction = next_instruction(core);
-  while(current_instruction != STOP){
+  while(current_instruction != STOP && (signed)current_instruction != EOF){
     if(current_instruction == UNINIT)
       fatal(UNINIT_BEFORE_STOP);
-    
+
     if(!execute_op(core, current_instruction))
       fatal(ILLEGAL_INSTRUCTION);
 
