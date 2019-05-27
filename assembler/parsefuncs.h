@@ -16,3 +16,6 @@ void call_parse(const char *line);
 void jmp_parse(const char *line);
 void ret_parse(const char *line);
 void stop_parse(const char *line);
+void load_parse(const char *line);
+void sym_parse(const char *line);
+void ccall_parse(const char *line);

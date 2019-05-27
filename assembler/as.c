@@ -24,23 +24,6 @@ char *opcode_table[] = {
   "stop"
 };
 
-void (*parse_functions[])(const char*) = {
-  poke_parse,
-  peek_parse,
-  add_parse,
-  sub_parse,
-  mul_parse,
-  div_parse,
-  and_parse,
-  or_parse,
-  xor_parse,
-  mov_parse,
-  call_parse,
-  jmp_parse,
-  ret_parse,
-  stop_parse
-};
-
 static void usage(void){
   fatal("Usage: bas [file]");
 }
@@ -74,6 +57,12 @@ static void process_instruction(const token token, const char *line){
     ret_parse(line);
   else if(string_equal("stop", token))
     stop_parse(line);
+  else if(string_equal("load", token))
+    load_parse(line);
+  else if(string_equal("sym", token))
+    sym_parse(line);
+  else if(string_equal("ccall", token))
+    ccall_parse(line);
 }
 
 static void process(const char *line){
