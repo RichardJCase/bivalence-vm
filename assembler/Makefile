@@ -1,9 +1,9 @@
-INCLUDES=-I$(VM_INC) -I$(COMP_INC)
+INCLUDES=-I$(VM_INC)
 TARGET=bas
 
 .PHONEY: $(LIBS) $(TEST)
 
-OBJ=as.o parsefuncs.o ../compiler/strings.o
+OBJ=as.o parsefuncs.o strings.o
 
 %.o: %.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES)
