@@ -16,8 +16,6 @@ expr_list -> expr expr_list, e
 expr -> lemma
 
 param_list -> TYPE ID param_list, e
-result -> app, ID, lit
-
 ID_list -> ID ID_list, e
 
 * Lemma
@@ -33,8 +31,7 @@ prop_list -> prop prop_list, e
 prop -> ID ':' defn
 
 * Implication
-imp -> ID '->' prop_list_head
-prop_list_head -> ID_list
+imp -> ID '->' ID_list
 
 * Semantics
 ** import 
