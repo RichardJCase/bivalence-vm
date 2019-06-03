@@ -1,10 +1,15 @@
 module Scanner where
 
-import Safe
+import Control.Monad
 import AST
 
-ss a = putStrLn a
-sf = putStrLn "failure"
+scan' :: String -> IO [Expr]
+scan' file = do
+  fileData <- readFile file
+  return []
 
-scan :: IO ()
-scan = proceed ss sf $ nth ["success"] 1
+scan :: [String] -> IO [Expr]
+scan files = concatMapM scan' files
+
+concatMapM :: (a -> IO [Expr]) -> [a] -> IO [Expr]
+concatMapM f list = fmap concat (mapM f list)

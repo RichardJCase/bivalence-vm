@@ -1,21 +1,46 @@
 module AST where
 
-data ID = ID String
-data Type = Type String
-data Operator = Operator String
+data ID = ID String deriving Eq
+
+--todo: any future rules we want here
+parseID :: String -> ID
+parseID str = ID str
+
+extractID :: ID -> String
+extractID (ID str) = str
+
+data Type = Type String deriving Eq
+
+parseType :: String -> Type
+parseType str = Type str
+
+extractType :: Type -> String
+extractType (Type str) = str
+
+data Operator = Operator String deriving Eq
+
+parseOperator :: String -> Operator
+parseOperator str = Operator str
+
+extractOperator :: Operator -> String
+extractOperator (Operator op) = op
+
 data Literal = Literal String
 
-data ExprList = ExprList Expr ExprList | ExprListEmptyString
-data Expr = Expr Signature Operator PropList Defn
-data Signature = Signature Type ID ParamList
+parseLiteral :: String -> Literal
+parseLiteral str = Literal str
 
-data IDList = IDList ID IDList | IDListEmptyString
-data ParamList = ParamList Type ID ParamList | ParamListEmptyString
+extractLibteral :: Literal -> String
+extractLibteral (Literal lit) = lit
 
-data Defn = DefnApplication Application | DefnImplication Implication
-data OutVars = OutVars Operator IDList
-data Application = Application ID IDList OutVars
+data Expr = Expr Signature Operator [Prop] Defn
+data Signature = Signature Type ID [Param]
 
-data Implication = Implication ID Operator IDList
+data Param = Param Type ID
+
+type Defn = Either Application Implication
+data OutVars = OutVars Operator [ID]
+data Application = Application ID [ID] OutVars
+
+data Implication = Implication ID Operator [ID]
 data Prop = Prop ID Operator Defn
-data PropList = PropList Prop PropList | PropListEmptyString

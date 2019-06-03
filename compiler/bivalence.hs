@@ -3,4 +3,4 @@ import Scanner
 {--# LANGUAGE ScopedTypeVarialbes #--}
 
 main :: IO ()
-main = scan
+main = putStrLn "todo"
