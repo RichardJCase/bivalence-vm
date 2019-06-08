@@ -34,28 +34,63 @@ prop -> ID ':' defn
 imp -> ID '->' ID_list
 
 * Semantics
-** import 
-process file, adding info to symbol table
+** Modules
+*** import
+ import [filename: ID] [optional alias: ID]
+*** namespacing
+Function names are preceded by the file, e.g 
+hello.bv:
+saystuff ->
+  puts "test"
 
-import [filename]
-** native
+main.bv:
+import hello
+main ->
+  hello.saystuff
+** Native
 definition for an external c function to be loaded
+@ [sig]
 
-native -> 'native' sig
 ** Types definitions
 **** Basic Types
-type [type alias] [type] [: [derived types]]
-space [type alias] [space] [: [derived types]]
+   typedef [type name: ID] [ID_tree] [: [derived types: ID_list]]
 const ID [value]
-ord ID_list
 
 **** Groups
-group [name] ID_list (ID list is lemmas that must hold) [: [derived types]]
-These follow rules of inheritance as in other languages, such that it can be considered a type rather than an abstract concept (such as in haskell)
+group [group name: ID] [functions: ID_list]
 
-**** Arbitrary
-'*' is an arbitrary type, determined by use at compile time. Limited use with groups.
+** Concurrency
+csp model
+! : output
+? : input - returns false if everything falls asleep
+?? : nonblocking input
+MAX_THREADS : constant # of cores
 
+main ->
+  a: ? scan
+  b: ? send
+  a /\ b
+
+scan ->
+  scanned : scan_db > changes
+  sent: ! changes
+  scanned -> sent -> scan
+  
+send ->
+  get: ? changes
+  sent: send_changes changes
+  get -> sent -> send
+
+
+* Additional checks
+** Suger
+_ = ID that is mutable that goes to nothing
+** Always false functions
+Functions that will always be false cause a compilation error, 
+but a flag can turn off this error (for testing).
+** Deadlock
+Some deadlock can be prevented by the CSP style checks. 
+If a function tries to recieve more than it can obtain, then it fails
 * Examples
 ** Proposition
    my_prop: add 1 1 > result

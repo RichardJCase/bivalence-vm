@@ -34,6 +34,8 @@ extractLibteral :: Literal -> String
 extractLibteral (Literal lit) = lit
 
 data Expr = Expr Signature Operator [Prop] Defn
+--todo: add typedefs
+
 data Signature = Signature Type ID [Param]
 
 data Param = Param Type ID
