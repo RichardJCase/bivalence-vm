@@ -82,7 +82,6 @@ send ->
   sent: send_changes changes
   get -> sent -> send
 
-
 * Additional checks
 ** Suger
 _ = ID that is mutable that goes to nothing
@@ -109,3 +108,18 @@ If a function tries to recieve more than it can obtain, then it fails
       c: close_db
       d: a -> b, c
       and a d
+* Preprocessor
+** Comments
+Anything following a single quote will be ignored until the end of a line.
+Multiline comments are two single quotes and ended by two single quotes. These can be embedded, e.g:
+''
+abc
+123
+''
+another multi line comment
+abc
+''
+''
+
+evaluates to nothing.
+** 
