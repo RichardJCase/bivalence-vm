@@ -31,7 +31,8 @@ prop_list -> prop prop_list, e
 prop -> ID ':' defn
 
 * Implication
-imp -> ID '->' ID_list
+imp -> ID '->' ID_list imp_tail
+imp_tail -> '->' ID_list imp_tail, e
 
 * Semantics
 ** Modules
@@ -53,7 +54,7 @@ definition for an external c function to be loaded
 
 ** Types definitions
 **** Basic Types
-   typedef [type name: ID] [ID_tree] [: [derived types: ID_list]]
+typedef [type name: ID] [: [derived types: ID_list]]
 const ID [value]
 
 **** Groups
