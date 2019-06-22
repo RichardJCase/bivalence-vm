@@ -7,20 +7,24 @@ import Codegen
 usage :: IO ()
 usage = putStrLn "bad"
 
-genOutfileName :: Maybe String -> Maybe String
-genOutfileName (Just filenameBase) = Just $ filenameBase ++ ".bb"
-genOutfileName Nothing = Nothing
+genOutfileName :: String -> String
+genOutfileName filenameBase = filenameBase ++ ".bb"
 
-getOutfileName :: String -> Maybe String
+getOutfileName :: String -> String
 getOutfileName filename =
-  genOutfileName Nothing (Just filename)
+  genOutfileName $ head $ split "." filename
+
+compileFailed :: IO ()
+compileFailed = putStrLn "Compilation aborted."
 
 compile :: String -> IO ()
 compile filename =
-  case outfile of
-    Just outfileName -> writeFile outfileName $ generateCode $ parse filename
-    Nothing -> putStrLn "bad"
-  where outfile = getOutfileName filename
+  case output of
+    Just ast -> writeFile outfileName $ generateCode ast
+    Nothing -> compileFailed
+  where
+    output = parse filename
+    outfileName = getOutfileName filename
 
 main :: IO ()
 main = do
