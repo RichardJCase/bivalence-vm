@@ -11,7 +11,7 @@ data Expr = ExprLemma | ExprNative | ExprTypeDef | ExprConst
 
 data ExprNative = Native ArrowOperator Signature
 data ExprTypeDef = TypeDef ID ColonOperator [ID]
-data ExprConst = Const ID RValue
+data ExprConst = Const {-rtodo: some keyword or symbol-} ID RValue
 
 data Prop = Prop ID ColonOperator Defn
 data ExprLemma = Lemma Signature ArrowOperator [Prop] Defn

@@ -65,21 +65,21 @@ csp model
 ! : output
 ? : input - returns false if everything falls asleep
 ?? : nonblocking input
-MAX_THREADS : constant # of cores
+maxThreads : constant # of cores
 
 main ->
   a: ? scan
   b: ? send
-  a /\ b
+  and a b
 
 scan ->
-  scanned : scan_db > changes
+  scanned: scanDB > changes
   sent: ! changes
   scanned -> sent -> scan
   
 send ->
   get: ? changes
-  sent: send_changes changes
+  sent: sendChanges changes
   get -> sent -> send
 
 * Additional checks
@@ -93,33 +93,29 @@ Some deadlock can be prevented by the CSP style checks.
 If a function tries to recieve more than it can obtain, then it fails
 * Examples
 ** Proposition
-   my_prop: add 1 1 > result
+   myProp: add 1 1 > result
 ** Lemma
-   my_lemma ->
+   myLemma ->
       a: connect "google.com"
-      b: send_message "GET /"
-      c: get_response
+      b: sendMessage "GET /"
+      c: getResponse
       d: and a b
       and c d
 ** Implication
-   upload_fun ->
-      a: connect_to_db
-      b: add_cat_photos
-      c: close_db
+   uploadFun ->
+      a: connectToDB
+      b: addCatPhotos
+      c: closeDB
       d: a -> b, c
       and a d
-* Preprocessor
+* Extra rules
 ** Comments
-Anything following a single quote will be ignored until the end of a line.
-Multiline comments are two single quotes and ended by two single quotes. These can be embedded, e.g:
-''
-abc
-123
-''
-another multi line comment
-abc
-''
-''
-
-evaluates to nothing.
-** 
+Comments are banned. Comments lie, code does not. Classic real world example:
+#+BEGIN_SRC c
+//enable scanning
+scanning = false;
+#+END_SRC
+** IDs
+IDs must be camelCase or a lone underscore
+** Types
+Types must be PascalCase
