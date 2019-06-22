@@ -75,15 +75,16 @@ parseOutOperator _ = Nothing
 parseParam :: [String] -> Maybe ([String], Param)
 parseParam [] = Nothing
 parseParam (x:[]) = Nothing
-parseParam (x:xs) =
+parseParam (x:xs:xss) =
   case parsedParam of
-    Just (sType, sID) -> Just (tail xs, Param sType sID)
+    Just (sType, sID) -> Just (xss, Param sType sID)
     Nothing -> Nothing
   where
     parsedParam = combine parsedType parsedID
     parsedType = parseType x
-    parsedID = parseID $ head xs
+    parsedID = parseID xs
 
+--rtodo: will need to make function for *_list rules that require at least one
 parseParamList :: [String] -> [Param] -> Maybe ([String], [Param])
 parseParamList [] [] = Nothing
 parseParamList [] params = Just ([], params)
@@ -107,28 +108,73 @@ parseSignature (x:xs) =
     parsedID = parseID x
     parsedParamList = parseParamList xs []
 
--- parseLemma :: [String] -> Maybe ExprLemma
--- parseLemma tokens =
---   proceed 
+parseProp :: [String] -> Maybe ([String], Prop)
+parseProp [] = Nothing
+parseProp (x:[]) = Nothing
+parseProp (x:xs) = Nothing --rtodo
 
-{-
-parseNative :: [String] -> Maybe ExprNative
-parseTypedef :: [String] -> Maybe ExprTypeDef
-parseConst :: [String] -> Maybe ExprConst
--}
+parsePropList :: [String] -> [Prop] -> Maybe ([String], [Prop])
+parsePropList [] [] = Nothing
+parsePropList [] props = Just ([], props)
+parsePropList tokens props =
+  case parsedProp of
+    Just (sTokens, sProp) -> parsePropList sTokens (props ++ [sProp])
+    Nothing -> if null props then Nothing else Just (tokens, props)
+  where parsedProp = parseProp tokens
 
-parseToken :: [String] -> ([String], Maybe Expr)
-parseToken tokens = ([], Nothing)
-  --rtodo
+parseDefn :: [String] -> Maybe ([String], Defn)
+parseDefn tokens = Nothing --rtodo
+
+--rtodo: make something not so ugly
+parseLemma :: [String] -> Maybe ExprLemma
+parseLemma tokens =
+  case parseSignature tokens of
+    Just ((x:xs), signature) ->
+      case parseArrowOperator x of
+        Just arrowOperator ->
+          case parsePropList xs [] of
+            Just (tokens', propList) ->
+              case parseDefn tokens' of
+                Just (remainingTokens, defn) -> Just $ Lemma signature arrowOperator propList defn
+                Nothing -> Nothing
+            Nothing -> Nothing
+        Nothing -> Nothing
+    Nothing -> Nothing
+
+parseExprNative :: [String] -> Maybe ([String], ExprNative)
+parseExprNative [] = Nothing
+parseExprNative tokens = Nothing
+
+parseExprTypeDef :: [String] -> Maybe ([String], ExprTypeDef)
+parseExprTypeDef [] = Nothing
+parseExprTypeDef tokens = Nothing
+
+parseExprConst :: [String] -> Maybe ([String], ExprConst)
+parseExprConst [] = Nothing
+parseExprConst tokens = Nothing
+
+parseRValue :: [String] -> Maybe ([String], RValue)
+parseRValue [] = Nothing
+parseRValue tokens = Nothing
+
+parseOutVars :: [String] -> Maybe ([String], OutVars)
+parseOutVars [] = Nothing
+parseOutVars tokens = Nothing
+
+parseExpr :: [String] -> Maybe ([String], Expr)
+parseExpr tokens = Nothing
 
 parseHelper :: [String] -> [Expr] -> Maybe [Expr]
 parseHelper [] exprs = Just exprs
 parseHelper tokens exprs =
   case parsedExpr of
-    Just expr -> parseHelper remainingCode (exprs ++ [expr])
+    Just (remainingCode, expr) -> parseHelper remainingCode (exprs ++ [expr])
     Nothing -> Nothing
   where
-    (remainingCode, parsedExpr) = parseToken tokens
+    parsedExpr = parseExpr tokens
+
+tokenize :: String -> [String]
+tokenize = words --rtodo: fix for string literals
 
 parse :: String -> Maybe [Expr]
-parse code = parseHelper (words code) []
+parse code = parseHelper (tokenize code) []
