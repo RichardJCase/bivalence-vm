@@ -5,13 +5,14 @@ data Type = Type String
 data Literal = Literal String
 data ArrowOperator = ArrowOperator String
 data ColonOperator = ColonOperator String
+data AtOperator = AtOperator String
 data OutOperator = OutOperator String
 
 data Expr = ExprLemma | ExprNative | ExprTypeDef | ExprConst
 
 data ExprNative = Native ArrowOperator Signature
 data ExprTypeDef = TypeDef ID ColonOperator [ID]
-data ExprConst = Const {-rtodo: some keyword or symbol-} ID RValue
+data ExprConst = Const AtOperator ID RValue
 
 data Prop = Prop ID ColonOperator Defn
 data ExprLemma = Lemma Signature ArrowOperator [Prop] Defn
