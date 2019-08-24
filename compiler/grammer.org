@@ -23,7 +23,7 @@ lemma -> sig '->' prop_list defn
 sig -> TYPE ID param_list
 defn -> app, imp
 
-app -> ID ID_list out_vars
+app -> ID ID_list out_vars '.'
 out_vars -> '>' ID_list
 
 * Propositions
@@ -32,7 +32,7 @@ prop -> ID ':' defn
 
 * Implication
 imp -> ID '->' ID_list imp_tail
-imp_tail -> '->' ID_list imp_tail, e
+imp_tail -> '->' ID_list imp_tail, '.'
 
 * Semantics
 ** Modules
@@ -47,7 +47,7 @@ saystuff ->
 main.bv:
 import hello
 main ->
-  hello.saystuff
+  hello_saystuff
 ** Native
 definition for an external c function to be loaded
 @ [sig]

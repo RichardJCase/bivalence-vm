@@ -1,7 +1,7 @@
 TARGET=bivalence
 
 $(TARGET):
-	ghc bivalence -O2
+	ghc bivalence.hs -O2
 
 all: $(TARGET)
 
