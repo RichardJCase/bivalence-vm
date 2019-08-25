@@ -1,0 +1,19 @@
+This is a document to cover the practices that must be followed when committing. 
+
+* Common
+** Essentially, make it look as if this code has only one author.
+*** Reflect existing code's indentation and spacing style.
+*** Reflect existing code's naming practices.
+*** Reflect existing code's practices.
+*** Etc.
+* (Controversial) Practices and Reasoning
+** No comments
+Comments do not get compiled against. There is no good form of verification for comments.
+ Comments lie, code does not. If you need to comment then do so with your code.
+* Tested
+** General
+All code must work. It's understandable to have commits that don't even compile,
+ but issuing a merge request on code that doesn't work in its happy path will result in a blacklisting.
+** Tests
+Unit tests shall be added to all code making up the standard library. These do not have to follow strict
+ guidelines, but they should still be understandable. 

@@ -18,8 +18,8 @@ getOutfileName :: String -> String
 getOutfileName filename =
   genOutfileName $ head $ split "." filename
 
-compileFailed :: IO ()
-compileFailed = die "Compilation aborted."
+compileFailed :: [String] -> IO ()
+compileFailed msg = die $ intercalate "\n" $ msg ++ ["Compilation aborted."]
 
 compile :: String -> IO ()
 compile filename = do
@@ -28,8 +28,8 @@ compile filename = do
   let outfileName = getOutfileName filename
 
   case output of
-    Just ast -> writeFile outfileName $ generateCode ast
-    Nothing -> compileFailed
+    Left ast -> writeFile outfileName $ generateCode ast
+    Right messages -> compileFailed messages
 
 main :: IO ()
 main = do

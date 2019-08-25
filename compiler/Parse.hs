@@ -115,19 +115,19 @@ parseTypeList tokens ids =
     Nothing -> if null ids then Right "Failed to parse type list." else Left (tokens, ids)
 
 --rtodo: will need to make function for *_list rules that require at least one
-parseParamList :: [String] -> [Param] -> Either ([String], [Param]) String
-parseParamList [] [] = Nothing
-parseParamList [] params = Just ([], params)
+parseParamList :: [String] -> [Param] -> Either ([String], [Param]) [String]
+parseParamList [] [] = Right []
+parseParamList [] params = Left ([], params)
 parseParamList tokens params =
   case parseParam tokens of
-    Just (sTokens, sParam) -> parseParamList sTokens (params ++ [sParam])
-    Nothing -> if null params then Nothing else Just (tokens, params)
+    Left (sTokens, sParam) -> parseParamList sTokens (params ++ [sParam])
+    Right _ -> if null params then Right tokens else Left (tokens, params)
 
-parseSignature :: [String] -> Either ([String], Signature) String
+parseSignature :: [String] -> Either ([String], Signature) [String]
 parseSignature (x:[]) =
   case parsedID of
-    Just sID -> Just ([], Signature sID [])
-    Nothing -> Nothing
+    Just sID -> Left ([], Signature sID [])
+    Nothing -> Right [x]
   where
     parsedID = parseID x
 
@@ -135,162 +135,164 @@ parseSignature (x:xs) =
   case parsedID of
     Just sID ->
       case parsedParamList of
-        Just (sTokens, sParams) -> Just (sTokens, Signature sID sParams)
-        Nothing -> Just (xs, Signature sID [])
-    Nothing -> Nothing
+        Left (sTokens, sParams) -> Left (sTokens, Signature sID sParams)
+        Right _ -> Left (xs, Signature sID [])
+    Nothing -> Right (x:xs)
   where
     parsedID = parseID x
     parsedParamList = parseParamList xs []
 
-parseSignature _ = Nothing
+parseSignature _ = Right []
 
-parseProp :: [String] -> Maybe ([String], Prop)
-parseProp [] = Nothing
-parseProp (x:[]) = Nothing
-parseProp (x:xs:[]) = Nothing
+parseProp :: [String] -> Either ([String], Prop) [String]
+--rtodo: obvious refactor
+parseProp [] = Right []
+parseProp (x:[]) = Right [x]
+parseProp (x:xs:[]) = Right (x:xs:[])
 parseProp (x:xs:xss) =
   case parseID x of
     Just sID ->
       case parseColonOperator xs of
         Just sColon ->
           case parseDefn xss of
-            Just (sTokens, sDefn) -> Just (sTokens, Prop sID sColon sDefn)
-            Nothing -> Nothing
-        Nothing -> Nothing
-    Nothing -> Nothing
+            Left (sTokens, sDefn) -> Left (sTokens, Prop sID sColon sDefn)
+            Right _ -> Right xss
+        Nothing -> Right (xs:xss)
+    Nothing -> Right (x:xs:xss)
   
-parsePropList :: [String] -> [Prop] -> Either ([String], [Prop]) String
-parsePropList [] [] = Nothing
-parsePropList [] props = Just ([], props)
+parsePropList :: [String] -> [Prop] -> Either ([String], [Prop]) [String]
+parsePropList [] [] = Right []
+parsePropList [] props = Left ([], props)
 parsePropList tokens props =
   case parseProp tokens of
-    Just (sTokens, sProp) -> parsePropList sTokens (props ++ [sProp])
-    Nothing -> if null props then Nothing else Just (tokens, props)
+    Left (sTokens, sProp) -> parsePropList sTokens (props ++ [sProp])
+    Right _ -> if null props then Right tokens else Left (tokens, props)
 
-parseApplication :: [String] -> Maybe ([String], Application)
+parseApplication :: [String] -> Either ([String], Application) [String]
 parseApplication (idToken:xs) =
   case parseID idToken of
     Just sID ->
       case parseRValueList xs [] of
-        Just (rvTokens, sRvalues) ->
+        Left (rvTokens, sRvalues) ->
           case parseOutVars rvTokens of
-            Just (outTokens, sOutvars) -> 
+            Left (outTokens, sOutvars) -> 
               case parseDotOperator (head rvTokens) of
-                Just sDot -> Just (outTokens, Application sID sRvalues (Just sOutvars) sDot)
-                Nothing -> Nothing
-            Nothing ->
+                Just sDot -> Left (outTokens, Application sID sRvalues (Just sOutvars) sDot)
+                Nothing -> Right (idToken:xs)
+            Right _ ->
               case parseDotOperator (head rvTokens) of
-                Just sDot -> Just (tail rvTokens, Application sID sRvalues Nothing sDot)
-                Nothing -> Nothing
-        Nothing ->
+                Just sDot -> Left (tail rvTokens, Application sID sRvalues Nothing sDot)
+                Nothing -> Right rvTokens
+        Right _ ->    
           case parseDotOperator (head xs) of
-            Just siDot -> Just (tail xs, Application sID [] Nothing siDot)
-            Nothing -> Nothing
-    Nothing -> Nothing
+            Just siDot -> Left (tail xs, Application sID [] Nothing siDot)
+            Nothing -> Right xs
+    Nothing -> Right (idToken:xs)
 
-parseImplication :: [String] -> Either ([String], Implication) String
+parseImplication :: [String] -> Either ([String], Implication) [String]
 parseImplication (idToken:arrowToken:xs) =
   case parseID idToken of
     Just sID ->
       case parseArrowOperator arrowToken of
         Just sArrow ->
           case parseIDList xs [] of
-            Just (sTokens, sIDs) -> do
+            Left (sTokens, sIDs) -> do
               let (piTokens, impTail) = parseImplicationTail sTokens []
               case parseDotOperator (head piTokens) of
                 Just sDot -> 
-                  Just (tail piTokens, Implication sID sArrow sIDs impTail sDot)
-                Nothing -> Nothing
-            Nothing -> Nothing
-        Nothing -> Nothing
-    Nothing -> Nothing
+                  Left (tail piTokens, Implication sID sArrow sIDs impTail sDot)
+                Nothing -> Right piTokens
+            Right _ -> Right xs
+        Nothing -> Right (arrowToken:xs)
+    Nothing -> Right (idToken:arrowToken:xs)
 
-parseImplication _ = Nothing
+parseImplication _ = Right []
 
 parseImplicationTail :: [String] -> [ImplicationTailElem] -> ([String], ImplicationTail)
 parseImplicationTail (arrowToken:xs) implicationTail =
   case parseArrowOperator arrowToken of
     Just sArrow ->
       case parseIDList xs [] of
-        Just (sTokens, sIDs) -> parseImplicationTail sTokens (implicationTail ++ [(ImplicationTail sArrow sIDs)])
-        Nothing -> (retTokens, implicationTail)
+        Left (sTokens, sIDs) -> parseImplicationTail sTokens (implicationTail ++ [(ImplicationTail sArrow sIDs)])
+        Right _ -> (retTokens, implicationTail)
     Nothing -> (retTokens, implicationTail)
   where retTokens = (arrowToken:xs)
-    
-parseDefn :: [String] -> Maybe ([String], Defn)
+
+--rtodo: replace all right _ with new name and return where error actually was, also clean up
+parseDefn :: [String] -> Either ([String], Defn) [String]
 parseDefn tokens = 
   case parseApplication tokens of
-    Just (appTokens, application) -> Just (appTokens, Left application)
-    Nothing ->
+    Left (appTokens, application) -> Left (appTokens, Left application)
+    Right _ ->
       case parseImplication tokens of
-        Just (impTokens, implication) -> Just (impTokens, Right implication)
-        Nothing -> Nothing
+        Left (impTokens, implication) -> Left (impTokens, Right implication)
+        Right _ -> Right tokens
 
 --rtodo: make function so all of these are not so ugly
 parseLemma :: [String] -> Either ([String], Expr) [String]
 parseLemma tokens =
   case parseSignature tokens of
-    Just ((x:xs), signature) ->
+    Left ((x:xs), signature) ->
       case parseArrowOperator x of
         Just arrowOperator ->
           case parsePropList xs [] of
-            Just (tokens', propList) ->
+            Left (tokens', propList) ->
               case parseDefn tokens' of
-                Just (remainingTokens, defn) -> Just (remainingTokens, Lemma signature arrowOperator propList defn)
-                Nothing -> Nothing
-            Nothing ->
+                Left (remainingTokens, defn) -> Left (remainingTokens, Lemma signature arrowOperator propList defn)
+                Right _ -> Right tokens
+            Right _ ->
               case parseDefn xs of
-                Just (remainingTokens, defn) -> Just (remainingTokens, Lemma signature arrowOperator [] defn)
-                Nothing -> Nothing
-        Nothing -> Nothing
-    Nothing -> Nothing
+                Left (remainingTokens, defn) -> Left (remainingTokens, Lemma signature arrowOperator [] defn)
+                Right _ -> Right tokens
+        Nothing -> Right tokens
+    Right _ -> Right tokens
 
-parseExprNative :: [String] -> Either ([String], Expr) String
+parseExprNative :: [String] -> Either ([String], Expr) [String]
 parseExprNative (x:xs) =
   case parseAtOperator x of
     Just sAt ->
       case parseSignature xs of
-        Just (sTokens, sSignature) -> Just (sTokens, Native sAt sSignature)
-        Nothing -> (x:xs)
-    Nothing -> (x:xs)
+        Left (sTokens, sSignature) -> Left (sTokens, Native sAt sSignature)
+        Right _ -> Right xs
+    Nothing -> Right (x:xs)
 
 --rtodo: good example, but needs better names
-parseExprTypeDef :: [String] -> Either ([String], Expr) String
-parseExprTypeDef tokens =
+parseExprTypeDef :: [String] -> Either ([String], Expr) [String]
+parseExprTypeDef (typeToken:colonToken:aliasToken:xs) =
   case parseType typeToken of
-    Nothing -> tokens
+    Nothing -> Right tokens
     Just tID ->
       case parseColonOperator colonToken of
-        Nothing -> tokens
+        Nothing -> Right tokens
         Just sColon ->
           case parseType aliasToken of
-            Nothing -> tokens
+            Nothing -> Right tokens
             Just aID ->
               case parseTypeList xs [] of
-                Just (sTokens, sIDList) -> Just (sTokens, TypeDef tID sColon aID sIDList)
-                Nothing -> Just (xs, TypeDef tID sColon aID [])
+                Left (sTokens, sIDList) -> Left (sTokens, TypeDef tID sColon aID sIDList)
+                Right _ -> Left (xs, TypeDef tID sColon aID [])
   where tokens = (typeToken:colonToken:aliasToken:xs)
     
-parseExprTypeDef _ = Nothing
+parseExprTypeDef _ = Right []
 
-parseExprConst :: [String] -> Either ([String], Expr) String
+parseExprConst :: [String] -> Either ([String], Expr) [String]
 parseExprConst (poundToken:idToken:valueToken:xs) =
   case poundOperator of
     Just sPound ->
       case id of
         Just sID ->
           case rvalue of
-            Just sValue -> Just (xs, Const sPound sID sValue)
-            Nothing -> tokens
-        Nothing -> tokens
-    Nothing -> tokens
+            Just sValue -> Left (xs, Const sPound sID sValue)
+            Nothing -> Right tokens
+        Nothing -> Right tokens
+    Nothing -> Right tokens
   where
     poundOperator = parsePoundOperator poundToken
     id = parseID idToken
     rvalue = parseRValue valueToken
     tokens = (poundToken:idToken:valueToken:xs)
 
-parseExprConst _ = Nothing
+parseExprConst _ = Right []
 
 parseRValue :: String -> Maybe RValue
 parseRValue [] = Nothing
@@ -302,23 +304,23 @@ parseRValue valueToken =
             Just rLiteral -> Just $ RValue $ Right rLiteral
             Nothing -> Nothing
 
-parseRValueList :: [String] -> [RValue] -> Either ([String], [RValue]) String
+parseRValueList :: [String] -> [RValue] -> Either ([String], [RValue]) [String]
 parseRValueList (x:xs) rvalues =
   case parseRValue x of
     Just rvalue -> parseRValueList xs (rvalues ++ [rvalue])
-    Nothing -> if null rvalues then (x:xs) else Just (x:xs, rvalues)
+    Nothing -> if null rvalues then Right (x:xs) else Left (x:xs, rvalues)
 
-parseRValueList tokens _ = tokens
+parseRValueList tokens _ = Right tokens
 
-parseOutVars :: [String] -> Either ([String], OutVars) String
-parseOutVars [] = Nothing
+parseOutVars :: [String] -> Either ([String], OutVars) [String]
+parseOutVars [] = Right []
 parseOutVars (outOpToken:tokens) =
   case parseOutOperator outOpToken of
     Just outOp ->
       case parseIDList tokens [] of
-        Just (sTokens, idList) -> Just (sTokens, OutVars outOp idList)
-        Nothing -> (outOpToken:tokens)
-    Nothing -> (outOpToken:tokens)
+        Left (sTokens, idList) -> Left (sTokens, OutVars outOp idList)
+        Right _ -> Right (outOpToken:tokens)
+    Nothing -> Right (outOpToken:tokens)
 
 --rtodo: make parser generator for this crap
 parseExpr :: [String] -> Either ([String], Expr) [String]
