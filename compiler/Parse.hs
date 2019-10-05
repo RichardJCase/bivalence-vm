@@ -16,12 +16,12 @@ literalRule = "('([^']*)')|[0-9]+"
 combine :: Maybe a -> Maybe b -> Maybe (a, b)
 combine x y =
   case x of
+    Nothing -> Nothing
     Just xVal ->
       case y of
-        Just yVal -> Just (xVal, yVal)
         Nothing -> Nothing
-    Nothing -> Nothing
-
+        Just yVal -> Just (xVal, yVal)
+    
 matchRule :: String -> String -> Maybe String
 matchRule text rule =
   if match == text then Just match
@@ -85,49 +85,49 @@ parsePoundOperator :: String -> Maybe PoundOperator
 parsePoundOperator "#" = Just $ PoundOperator "#"
 parsePoundOperator _ = Nothing
 
---rtodo: better variable names
+eof = "<$EOF>"
+
 parseParam :: [String] -> Either ([String], Param) [String]
-parseParam (x:[]) = Right [x]
-parseParam (x:xs:xss) =
+parseParam (typeToken:idToken:rest) =
   case parsedParam of
-    Just (sType, sID) -> Left (xss, Param sType sID)
-    Nothing -> Right rest
+    Just (sType, sID) -> Left (rest, Param sType sID)
+    Nothing -> Right ("Failed to parse param":typeToken:idToken:rest)
   where
     parsedParam = combine parsedType parsedID
-    parsedType = parseType x
-    parsedID = parseID xs
-    rest = (x:xs:xss)
+    parsedType = parseType typeToken
+    parsedID = parseID idToken
 
---rtodo: simplify these to be recursive in both cases
+parseParam other = Right ("Failed to parse param":other)
+
 parseIDList :: [String] -> [ID] -> Either ([String], [ID]) [String]
+parseIDList [] [] = Right ["Failed to parse ID list", eof]
 parseIDList [] ids = Left ([], ids)
 parseIDList tokens ids =
   case parseID (head tokens) of
     Just sID -> parseIDList (tail tokens) (ids ++ [sID])
-    Nothing -> if null ids then Right tokens else Left (tokens, ids)
+    Nothing -> if null ids then Right ("Failed to parse ID list":tokens) else Left (tokens, ids)
 
-parseTypeList :: [String] -> [Type] -> Either ([String], [Type]) String
-parseTypeList [] [] = Right "Failed to parse type list."
+parseTypeList :: [String] -> [Type] -> Either ([String], [Type]) [String]
+parseTypeList [] [] = Right ["Failed to parse type list", eof]
 parseTypeList [] ids = Left ([], ids)
 parseTypeList tokens ids =
   case parseType (head tokens) of
     Just sType -> parseTypeList (tail tokens) (ids ++ [sType])
-    Nothing -> if null ids then Right "Failed to parse type list." else Left (tokens, ids)
+    Nothing -> if null ids then Right ("Failed to parse type list":tokens) else Left (tokens, ids)
 
---rtodo: will need to make function for *_list rules that require at least one
 parseParamList :: [String] -> [Param] -> Either ([String], [Param]) [String]
-parseParamList [] [] = Right []
+parseParamList [] [] = Right ["Failed to parse param list", eof]
 parseParamList [] params = Left ([], params)
 parseParamList tokens params =
   case parseParam tokens of
     Left (sTokens, sParam) -> parseParamList sTokens (params ++ [sParam])
-    Right _ -> if null params then Right tokens else Left (tokens, params)
+    Right error -> if null params then Right (error) else Left (tokens, params)
 
 parseSignature :: [String] -> Either ([String], Signature) [String]
 parseSignature (x:[]) =
   case parsedID of
     Just sID -> Left ([], Signature sID [])
-    Nothing -> Right [x]
+    Nothing -> Right ["Failed to parse signature", x]
   where
     parsedID = parseID x
 
@@ -145,80 +145,82 @@ parseSignature (x:xs) =
 parseSignature _ = Right []
 
 parseProp :: [String] -> Either ([String], Prop) [String]
---rtodo: obvious refactor
 parseProp [] = Right []
 parseProp (x:[]) = Right [x]
 parseProp (x:xs:[]) = Right (x:xs:[])
 parseProp (x:xs:xss) =
   case parseID x of
+    Nothing -> Right (propFail:x:xs:xss)
     Just sID ->
       case parseColonOperator xs of
+        Nothing -> Right (propFail:xs:xss)
         Just sColon ->
           case parseDefn xss of
             Left (sTokens, sDefn) -> Left (sTokens, Prop sID sColon sDefn)
-            Right _ -> Right xss
-        Nothing -> Right (xs:xss)
-    Nothing -> Right (x:xs:xss)
-  
+            Right error -> Right error
+  where
+    propFail = "Failed to parse proposition"
+    
 parsePropList :: [String] -> [Prop] -> Either ([String], [Prop]) [String]
 parsePropList [] [] = Right []
 parsePropList [] props = Left ([], props)
 parsePropList tokens props =
   case parseProp tokens of
     Left (sTokens, sProp) -> parsePropList sTokens (props ++ [sProp])
-    Right _ -> if null props then Right tokens else Left (tokens, props)
+    Right error -> if null props then Right error else Left (tokens, props)
 
 parseApplication :: [String] -> Either ([String], Application) [String]
 parseApplication (idToken:xs) =
   case parseID idToken of
+    Nothing -> Right (fail:idToken:xs)
     Just sID ->
       case parseRValueList xs [] of
         Left (rvTokens, sRvalues) ->
           case parseOutVars rvTokens of
             Left (outTokens, sOutvars) -> 
-              case parseDotOperator (head rvTokens) of
-                Just sDot -> Left (outTokens, Application sID sRvalues (Just sOutvars) sDot)
-                Nothing -> Right (idToken:xs)
+              case parseDotOperator (head outTokens) of
+                Just sDot -> Left (tail outTokens, Application sID sRvalues (Just sOutvars) sDot)
+                Nothing -> Right (fail:idToken:xs)
             Right _ ->
               case parseDotOperator (head rvTokens) of
                 Just sDot -> Left (tail rvTokens, Application sID sRvalues Nothing sDot)
-                Nothing -> Right rvTokens
-        Right _ ->    
+                Nothing -> Right (fail:rvTokens)
+        Right _ ->
           case parseDotOperator (head xs) of
             Just siDot -> Left (tail xs, Application sID [] Nothing siDot)
-            Nothing -> Right xs
-    Nothing -> Right (idToken:xs)
-
+            Nothing -> Right (fail:xs)
+  where fail = "Failed to parse application"
+  
 parseImplication :: [String] -> Either ([String], Implication) [String]
 parseImplication (idToken:arrowToken:xs) =
   case parseID idToken of
+    Nothing -> Right (fail:idToken:arrowToken:xs)
     Just sID ->
       case parseArrowOperator arrowToken of
+        Nothing -> Right (fail:arrowToken:xs)
         Just sArrow ->
           case parseIDList xs [] of
+            Right error -> Right error
             Left (sTokens, sIDs) -> do
               let (piTokens, impTail) = parseImplicationTail sTokens []
               case parseDotOperator (head piTokens) of
+                Nothing -> Right (fail:piTokens)
                 Just sDot -> 
                   Left (tail piTokens, Implication sID sArrow sIDs impTail sDot)
-                Nothing -> Right piTokens
-            Right _ -> Right xs
-        Nothing -> Right (arrowToken:xs)
-    Nothing -> Right (idToken:arrowToken:xs)
+  where fail = "Failed to parse implication"
 
-parseImplication _ = Right []
+parseImplication _ = Right ["Failed to parse implication", eof]
 
 parseImplicationTail :: [String] -> [ImplicationTailElem] -> ([String], ImplicationTail)
 parseImplicationTail (arrowToken:xs) implicationTail =
   case parseArrowOperator arrowToken of
+    Nothing -> (retTokens, implicationTail)
     Just sArrow ->
       case parseIDList xs [] of
         Left (sTokens, sIDs) -> parseImplicationTail sTokens (implicationTail ++ [(ImplicationTail sArrow sIDs)])
         Right _ -> (retTokens, implicationTail)
-    Nothing -> (retTokens, implicationTail)
   where retTokens = (arrowToken:xs)
 
---rtodo: replace all right _ with new name and return where error actually was, also clean up
 parseDefn :: [String] -> Either ([String], Defn) [String]
 parseDefn tokens = 
   case parseApplication tokens of
@@ -226,73 +228,74 @@ parseDefn tokens =
     Right _ ->
       case parseImplication tokens of
         Left (impTokens, implication) -> Left (impTokens, Right implication)
-        Right _ -> Right tokens
+        Right error -> Right error
 
---rtodo: make function so all of these are not so ugly
+--rtodo: see why not working on test.bi, function seems good on its own
 parseLemma :: [String] -> Either ([String], Expr) [String]
 parseLemma tokens =
   case parseSignature tokens of
+    Right error -> Right error
     Left ((x:xs), signature) ->
       case parseArrowOperator x of
+        Nothing -> Right ("Failed to parse lemma":tokens)
         Just arrowOperator ->
           case parsePropList xs [] of
             Left (tokens', propList) ->
               case parseDefn tokens' of
                 Left (remainingTokens, defn) -> Left (remainingTokens, Lemma signature arrowOperator propList defn)
-                Right _ -> Right tokens
+                Right defnError -> Right defnError
             Right _ ->
               case parseDefn xs of
                 Left (remainingTokens, defn) -> Left (remainingTokens, Lemma signature arrowOperator [] defn)
-                Right _ -> Right tokens
-        Nothing -> Right tokens
-    Right _ -> Right tokens
+                Right defnError -> Right defnError
 
 parseExprNative :: [String] -> Either ([String], Expr) [String]
 parseExprNative (x:xs) =
   case parseAtOperator x of
+    Nothing -> Right ("Failed to parse native expression":x:xs)
     Just sAt ->
       case parseSignature xs of
         Left (sTokens, sSignature) -> Left (sTokens, Native sAt sSignature)
-        Right _ -> Right xs
-    Nothing -> Right (x:xs)
+        Right error -> Right error
 
---rtodo: good example, but needs better names
 parseExprTypeDef :: [String] -> Either ([String], Expr) [String]
 parseExprTypeDef (typeToken:colonToken:aliasToken:xs) =
   case parseType typeToken of
-    Nothing -> Right tokens
+    Nothing -> Right ((errorBase ++ "expected type"):tokens)
     Just tID ->
       case parseColonOperator colonToken of
-        Nothing -> Right tokens
+        Nothing -> Right ((errorBase ++ "expected colon"):tokens)
         Just sColon ->
           case parseType aliasToken of
-            Nothing -> Right tokens
+            Nothing -> Right ((errorBase ++ "expected alias"):tokens)
             Just aID ->
               case parseTypeList xs [] of
                 Left (sTokens, sIDList) -> Left (sTokens, TypeDef tID sColon aID sIDList)
                 Right _ -> Left (xs, TypeDef tID sColon aID [])
   where tokens = (typeToken:colonToken:aliasToken:xs)
-    
-parseExprTypeDef _ = Right []
+        errorBase = "Failed to parse typedef: "
+        
+parseExprTypeDef _ = Right ["Failed to parse typedef", eof]
 
 parseExprConst :: [String] -> Either ([String], Expr) [String]
 parseExprConst (poundToken:idToken:valueToken:xs) =
   case poundOperator of
+    Nothing -> Right (errorBase:tokens)
     Just sPound ->
       case id of
+        Nothing -> Right (errorBase:tokens)
         Just sID ->
           case rvalue of
+            Nothing -> Right (errorBase:tokens)
             Just sValue -> Left (xs, Const sPound sID sValue)
-            Nothing -> Right tokens
-        Nothing -> Right tokens
-    Nothing -> Right tokens
   where
     poundOperator = parsePoundOperator poundToken
     id = parseID idToken
     rvalue = parseRValue valueToken
     tokens = (poundToken:idToken:valueToken:xs)
+    errorBase = "Failed to parse const"
 
-parseExprConst _ = Right []
+parseExprConst _ = Right ["Failed to parse const", eof]
 
 parseRValue :: String -> Maybe RValue
 parseRValue [] = Nothing
@@ -310,7 +313,8 @@ parseRValueList (x:xs) rvalues =
     Just rvalue -> parseRValueList xs (rvalues ++ [rvalue])
     Nothing -> if null rvalues then Right (x:xs) else Left (x:xs, rvalues)
 
-parseRValueList tokens _ = Right tokens
+parseRValueList [] [] = Right [eof]
+parseRValueList [] rvalues = Left ([], rvalues)
 
 parseOutVars :: [String] -> Either ([String], OutVars) [String]
 parseOutVars [] = Right []
@@ -357,6 +361,7 @@ quote (x:xs) currentString strings = quote xs (currentString ++ [x]) strings
 
 --rtodo: refactor
 tokenizeSym :: String -> String -> [String] -> [String]
+tokenizeSym _ "" strings = strings
 tokenizeSym "" currentString strings = strings ++ [currentString]
 tokenizeSym (x:xs) (cx:cxs) strings =
   case cx of
@@ -364,15 +369,14 @@ tokenizeSym (x:xs) (cx:cxs) strings =
     _ ->
       if isNumber cx
       then
-        if isNumber $ head cxs
+        if isNumber x
         then tokenizeSym xs ((cx:cxs) ++ [x]) strings
         else tokenize' (x:xs) "" (strings ++ [(cx:cxs)])
       else
-        singleChar
-    where
-      singleChar = tokenize' (x:xs) "" (strings ++ [[cx]])
-
+        tokenize' (x:xs) "" (strings ++ [[cx]])
+        
 tokenize' :: String -> String -> [String] -> [String]
+tokenize' "" "" [] = []
 tokenize' "" "" strings = strings
 tokenize' "" currentString strings = strings ++ [currentString]  
 tokenize' (x:xs) currentString strings =

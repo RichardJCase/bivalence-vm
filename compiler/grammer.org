@@ -54,8 +54,8 @@ definition for an external c function to be loaded
 
 ** Types definitions
 **** Basic Types
-typedef [type name: ID] [: [derived types: ID_list]]
-const ID [value]
+typedefs: @ [type name: ID] [: [derived types: ID_list]]
+consts: # ID [value]
 
 **** Groups
 group [group name: ID] [functions: ID_list]

@@ -1,5 +1,6 @@
 import System.Environment
 import System.Exit
+import Data.List
 import Data.List.Utils
 import Safe
 import Parse
