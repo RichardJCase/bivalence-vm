@@ -11,6 +11,9 @@ typedef uint_fast16_t u16;
 typedef uint_fast32_t u32;
 typedef uint64_t u64;
 
+typedef uint8_t byte;
+typedef uintptr_t pointer;
+
 #define bool u8
 #define success 0
 #define failure 1

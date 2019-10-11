@@ -1,7 +1,6 @@
 #include <pthread.h> 
 #include "mem.h"
 
-pthread_mutex_t pool_mutex = {0};
 byte *pool = NULL;
 
 size_t mempool_realloc_space(size_t pool_size, size_t pool_max){

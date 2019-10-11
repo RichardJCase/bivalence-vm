@@ -20,4 +20,8 @@ bool mempool_put(pointer ptr, void *value);
 bool mempool_delete(pointer ptr);
 bool mempool_shrink(void);
 
+//rtodo
+bool mempool_get_ref(pointer ptr, pointer *value);
+bool mempool_release_ref(pointer ptr);
+
 lemma reserve, new, get, put, delete, shrink;
