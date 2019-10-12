@@ -16,3 +16,7 @@
       (font-lock-flush)
     (when font-lock-mode
       (with-no-warnings (font-lock-fontify-buffer)))))
+
+(add-hook 'bi-mode-hook
+          (lambda ()
+            (push '("->" . ?→) prettify-symbols-alist)))
