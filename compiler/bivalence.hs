@@ -19,8 +19,8 @@ getOutfileName :: String -> String
 getOutfileName filename =
   genOutfileName $ head $ split "." filename
 
-compileFailed :: [String] -> IO ()
-compileFailed msg = die $ intercalate "\n" $ msg ++ ["Compilation aborted."]
+compileFailed :: String -> IO ()
+compileFailed msg = die msg
 
 compile :: String -> IO ()
 compile filename = do
@@ -30,7 +30,7 @@ compile filename = do
 
   case output of
     Left ast -> writeFile outfileName $ generateCode ast
-    Right messages -> compileFailed messages
+    Right message -> compileFailed message
 
 main :: IO ()
 main = do

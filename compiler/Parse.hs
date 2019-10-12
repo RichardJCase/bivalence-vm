@@ -248,6 +248,7 @@ parseLemma tokens =
               case parseDefn xs of
                 Left (remainingTokens, defn) -> Left (remainingTokens, Lemma signature arrowOperator [] defn)
                 Right defnError -> Right defnError
+    Left (_, _) -> Right [eof]
 
 parseExprNative :: [String] -> Either ([String], Expr) [String]
 parseExprNative (x:xs) =
@@ -326,8 +327,8 @@ parseOutVars (outOpToken:tokens) =
         Right _ -> Right (outOpToken:tokens)
     Nothing -> Right (outOpToken:tokens)
 
---rtodo: make parser generator for this crap
-parseExpr :: [String] -> Either ([String], Expr) [String]
+--todo: eventually handle other messages
+parseExpr :: [String] -> Either ([String], Expr) String
 parseExpr tokens =
   case parseLemma tokens of
     Left (lTokens, sLemma) -> Left (lTokens, sLemma)
@@ -340,19 +341,21 @@ parseExpr tokens =
             Right _ ->
               case parseExprConst tokens of
                 Left (cTokens, sConst) -> Left (cTokens, sConst)
-                Right _ -> Right tokens
+                Right _ -> Right $ "Invalid expression: " ++ (head tokens)
 
-parseHelper :: [String] -> [Expr] -> Either [Expr] [String]
+parseHelper :: [String] -> [Expr] -> Either [Expr] String
 parseHelper [] exprs = Left exprs
 parseHelper tokens exprs =
   case parsedExpr of
     Left (remainingCode, expr) -> parseHelper remainingCode (exprs ++ [expr])
-    Right remaining -> Right remaining 
+    Right message -> Right $ parseFailure message  
   where
     parsedExpr = parseExpr tokens
 
---rtodo: function to generate error message
-
+parseFailure :: String -> String
+parseFailure message =
+  "Parse failure - " ++ message
+  
 quote :: String -> String -> [String] -> [String]
 quote "" "" strings = strings
 quote "" currentString strings = strings ++ [currentString]
@@ -401,6 +404,6 @@ removeEmpty (x:xs) nonempty = if x == ""
 tokenize :: String -> [String]
 tokenize code = removeEmpty (tokenize' code "" []) []
 
-parse :: String -> Either [Expr] [String]
+parse :: String -> Either [Expr] String
 parse code = parseHelper (tokenize code) []
 
