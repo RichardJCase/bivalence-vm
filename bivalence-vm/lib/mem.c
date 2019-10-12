@@ -27,16 +27,19 @@ typedef struct {
 
 memory_chunk pointers[MAX_ALLOCATIONS] = {0};
 
-void set_mempool_max(size_t bytes){
+bool set_mempool_max(size_t bytes){
 	mempool_max = bytes;
+	return true;
 }
 
-void set_mempool_free_threshold(size_t bytes){
+bool set_mempool_free_threshold(size_t bytes){
   mempool_free_threshold = bytes;
+	return true;
 }
 
-void set_mempool_space_func(mempool_space_func func){
+bool set_mempool_space_func(mempool_space_func func){
 	space_to_allocate = func;
+	return true;
 }
 
 bool mempool_reserve(size_t bytes){
