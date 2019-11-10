@@ -106,3 +106,53 @@ bool mempool_shrink(void){
 	pool = realloc(pool, mempool_used);
 	return NULL != pool;
 }
+
+//rtodo
+bool reserve(pointer reserve_args){
+	size_t bytes;
+	
+	if(!mempool_get(new_args, &bytes))
+		return false;
+
+	return mempool_reserve(bytes);
+}
+
+bool new(pointer new_args){
+	size_t bytes;
+	
+	if(!mempool_get(new_args, &bytes))
+		return false;
+
+	return mempool_new(bytes, bytes + sizeof(bytes));
+}
+
+bool get(pointer get_args){
+	pointer ptr;
+
+	if(!mempool_get(get_args, &ptr))
+		return false;
+
+	return mempool_get(ptr, ptr + sizeof(ptr));
+}
+
+bool put(pointer put_args){
+	pointer ptr;
+
+	if(!mempool_get(put_args, &ptr))
+		return false;
+
+	return mempool_put(ptr, ptr + sizeof(ptr));
+}
+
+bool delete(pointer delete_args){
+	pointer ptr;
+
+	if(!mempool_get(put_args, &ptr))
+		return false;
+
+	return mempool_delete(ptr);
+}
+
+bool gc_collect(void){
+	return mempool_shrink();
+}

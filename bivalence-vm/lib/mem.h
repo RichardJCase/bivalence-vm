@@ -1,11 +1,12 @@
 #pragma once
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include "int.h"
 #include "bivalence.h"
 
-typedef size_t (*mempool_space_func)(size_t pool_size, size_t pool_max);
+typedef bool (*mempool_space_func)(size_t pool_size, pointer *out_new_size);
 
 bool mempool_get(pointer ptr, void *out_value);
 bool set_mempool_max(size_t bytes);
@@ -19,4 +20,4 @@ bool mempool_shrink(void);
 bool mempool_get_ref(pointer ptr, pointer *value);
 bool mempool_release_ref(pointer ptr);
 
-lemma reserve, new, get, put, delete, shrink;
+lemma reserve, new, get, put, delete, gc_collect;
