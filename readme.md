@@ -20,7 +20,45 @@ Nearly everything could have behavior that is not expected. Even something as si
 ** Thread safety: Concurrency pattern prevents most deadlock, and every object, beging immutable, is threadsafe.
 ** Memory corruption: Non-bounds checked array access has always been a problem. An exception (and inability to use pointers) is not much better than a segfault. All standard library functions simply return false on what would normally cause either of these. The case is forced to be handled, hence bounds are always gracefully checked.
 * VM save states
-Running on a VM allows for saving the state of a program and loading it at a future point. This allows for much easier testing as after patches can be applied, the user no longer needs to provide specific input to rereach the state of code that a bug may have occurred. 
+Running on a VM allows for saving the state of a program and loading it at a future point. This allows for much easier testing as after patches can be applied, the user no longer needs to provide specific input to rereach the state of code that a bug may have occurred.
+* Program verification
+** Contradictions
+Consider the c program:
+```
+//check if x is between 2 and 10
+bool contradict(int x){
+		return 10 > x > 2;
+}
+
+int main(){
+		puts(contradict(5) ? "success" : "fail");
+		return 0;
+}
+```
+
+Here, `contradict` is always false. The following is an identical program in bivalence:
+```
+toInt Prop p > Int out ->
+			h0: p -> set out 1.
+			h1: not p -> set out 0.
+			and h0 h1.	
+
+contradict Int x ->
+		 h0: less x 10.
+		 h1: toInt h0 > boolInt.
+		 greater boolInt 2.
+		 
+main ->
+		 con: contradict 5
+		 con -> puts "success".
+		 ~con -> puts "fail".
+
+```
+
+The compiler will determine that contradiction
+
+** Non-termination
+** Greedy failure
 
 ## Examples
 ### Hello World

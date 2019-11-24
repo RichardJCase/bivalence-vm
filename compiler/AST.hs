@@ -1,6 +1,6 @@
 module AST where
 
-data ID = ID String deriving Show
+data ID = ID String deriving (Show, Eq)
 data Type = Type String deriving Show
 data Literal = Literal String deriving Show
 data ArrowOperator = ArrowOperator String deriving Show
@@ -26,6 +26,6 @@ data OutVars = OutVars OutOperator [ID] deriving Show
 
 data Application = Application ID [RValue] (Maybe OutVars) DotOperator deriving Show
 
-data Implication = Implication ID ArrowOperator [ID] ImplicationTail DotOperator deriving Show
+data Implication = Implication ID ArrowOperator ID ImplicationTail DotOperator deriving Show
 type ImplicationTail = [ImplicationTailElem]
-data ImplicationTailElem = ImplicationTail ArrowOperator [ID] deriving Show
+data ImplicationTailElem = ImplicationTail ArrowOperator ID deriving Show
