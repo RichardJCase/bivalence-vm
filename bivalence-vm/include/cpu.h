@@ -2,8 +2,6 @@
 
 #include "int.h"
 
-typedef uint8_t byte;
-
 typedef struct {
   bool br;
   u8 rr;

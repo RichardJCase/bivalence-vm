@@ -1,0 +1,22 @@
+* language
+** determine how types will actually inherit
+** fix implication
+** out vars in Signature
+* stdlib
+** data structures
+*** sets
+*** hashes
+*** alias structs to ~pointer~
+** test
+*** memory
+*** sets
+*** hashes
+** algorithms
+** io
+** random
+** net
+** sig
+*** save states
+** math
+* test stdlib
+** ensure nothing is missed (compiler checks for non-checked return value)

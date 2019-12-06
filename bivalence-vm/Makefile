@@ -19,7 +19,7 @@ $(TEST):
 
 clean:
 	rm -f *.o *~ $(TARGET)
-	rm -f lib/*.a
+	make -C lib clean
 	make -C test clean
 
 re: clean $(TARGET)
