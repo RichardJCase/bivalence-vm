@@ -4,10 +4,10 @@ typedef struct {
   pointer *data;
   size_t width, length;
   bool (*next)(void*);
+  bool (*hash)(void*);
 } set_t;
 
-//rtodo: will need to test to see if this is valid
-#define vector_index (vector_ptr + index * vector->width)
+#define vector_index (vector->data + index * vector->width)
 
 bool vector_create(size_t width, size_t length, pointer *vector_ptr){
   if(!mempool_new(sizeof(set_t), vector_ptr))
@@ -21,7 +21,7 @@ bool vector_create(size_t width, size_t length, pointer *vector_ptr){
 bool vector_get(pointer vector_ptr, size_t index, void *out_item){
   set_t *vector;
   return mempool_get(vector_ptr, vector)
-    && index >= vector->length
+    && index < vector->length
     && mempool_get(vector_index, out_item);
 }
 
@@ -42,7 +42,7 @@ bool vector_insert(pointer vector_ptr, size_t index, void *item){
       return false;
   }
 
-  mempool_put(vector_index, vector->width);
+  mempool_put(vector_index, item);
   return true;
 }
 
@@ -93,8 +93,8 @@ bool vector_copy(pointer *dest_vector_ptr, pointer vector_ptr){
   return true;
 }
 
-//rtodo
-bool set_create(size_t width, bool (*next)(void*), pointer *out_set_ptr){
+bool set_create(size_t width, bool (*hash)(Set, void*), bool (*next)(Set, void*), pointer *out_set_ptr){
+  out_set_ptr->hash = hash ? hash : vector_add;
   out_set_ptr->next = next;
   return vector_create(width, 1, out_set_ptr);
 }
@@ -104,27 +104,63 @@ bool set_get(pointer set_ptr, size_t index, void *out_item){
   if(!mempool_get(set_ptr, set))
     return false;
   
-  if(index > set->length){
-    if(!set->next)
-      return false;
+  if(index < set->length)
+    return vector_get(set_ptr, index, out_item);
+  
+  if(!set->next)
+    return false;
 
-    //rtodo: calculate it (use set_add)
+  void *last_item = alloca(set->width);
+  if(!set_get(set_ptr, set->length - 1, last_item))
+    return false;
+    
+  while(set->length - 1 != index){
+    void *next_item = alloca(set->width);
+    if(!set->next(last_item, next_item))
+      return false;
+      
+    memcpy(last_item, next_item, set->width);
+      
+    if(!set_add(set_ptr, next_item))
+      return false;
   }
 
-  return vector_get(set_ptr, index, out_item);
+  *out_item = last_item;
+  return true;
 }
 
 bool set_add(pointer set_ptr, void *item){
-  return false;
+  return set->hash(set_ptr, item);
 }
 
 bool set_remove(pointer set_ptr, size_t index){
-  if(set->next)
+  set_t *set;
+  if(!mempool_get(set_ptr, set) || set_ptr->next)
     return false;
 
-  return false;
+  return vector_remove(set_ptr, index);
 }
 
 bool set_clear(pointer set_ptr){
+  set_t *set;
+  if(!mempool_get(set_ptr, set) || set_ptr->next)
+    return false;
+
+  return vector_clear(set_ptr);
+}
+
+bool hash_create(size_t buckets, size_t width, bool (*hash)(void*, size_t), bool (*lookup)(void*, void*), Hash *hash_ptr){
+  return false;
+}
+
+bool hash_get(Hash hash_ptr, Hash *key, void *out_value){
+  return false;
+}
+
+bool hash_put(Hash hash_ptr, Hash *key, void *value){
+  return false;
+}
+
+bool hash_clear(Hash hash_ptr){
   return false;
 }

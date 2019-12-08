@@ -2,21 +2,24 @@
 
 #include "mem.h"
 
-bool vector_create(size_t width, size_t length, pointer *out_vector_ptr);
-bool vector_get(pointer vector_ptr, size_t index, void *out_item);
-bool vector_add(pointer vector_ptr, void *item);
-bool vector_insert(pointer vector_ptr, void *item);
-bool vector_remove(pointer vector_ptr, size_t index);
-bool vector_clear(pointer vector_ptr);
-bool vector_copy(pointer dest_vector_ptr, pointer vector_ptr);
+typedef pointer Vector;
+bool vector_create(size_t width, size_t length, Vector *out_vector_ptr);
+bool vector_get(Vector vector_ptr, size_t index, void *out_item);
+bool vector_add(Vector vector_ptr, void *item);
+bool vector_insert(Vector vector_ptr, void *item);
+bool vector_remove(Vector vector_ptr, size_t index);
+bool vector_clear(Vector vector_ptr);
+bool vector_copy(Vector dest_vector_ptr, Vector vector_ptr);
 
-bool set_create(size_t width, bool (*next)(void*), pointer *out_set_ptr);
-bool set_get(pointer set_ptr, size_t index, void *out_item);
-bool set_add(pointer set_ptr, void *item);
-bool set_remove(pointer set_ptr, size_t index);
-bool set_clear(pointer set_ptr);
+typedef pointer Set;
+bool set_create(size_t width, bool (*add)(Set, void*), bool (*next)(void*, void*), Set *out_set_ptr);
+bool set_get(Set set_ptr, size_t index, void *out_item);
+bool set_add(Set set_ptr, void *item);
+bool set_remove(Set set_ptr, size_t index);
+bool set_clear(Set set_ptr);
 
-bool hash_create(size_t buckets, size_t width, bool (*hash_func)(void *, size_t), bool (*comp_func)(void *, void *, bool *), pointer *hash_ptr);
-bool hash_get(pointer hash_ptr, pointer *key, void *out_value);
-bool hash_put(pointer hash_ptr, pointer *key, void *value);
-bool hash_clear(pointer hash_ptr);
+typedef pointer Hash;
+bool hash_create(size_t buckets, size_t width, bool (*hash)(void*, size_t), bool (*lookup)(void*, void*), Hash *hash_ptr);
+bool hash_get(Hash hash_ptr, Hash *key, void *out_value);
+bool hash_put(Hash hash_ptr, Hash *key, void *value);
+bool hash_clear(Hash hash_ptr);
