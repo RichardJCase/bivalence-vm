@@ -1,4 +1,4 @@
-# Bivalence
+# Bivalence (discontinued)
 Bivalence is a programming language designed to make writing programs more logical. Rather than try to prove your program is correct, your program proves to you if it is correct. Every expectation is checked during the runtime of the program, forcing your code to adapt to the unexpected. 
 
 ## Features
